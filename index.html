@@ -7,240 +7,461 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
+    :root {
+      --bg: #f4eee8;
+      --bg-soft: #fbf7f2;
+      --deep: #211b18;
+      --deep-2: #3c2f29;
+      --gold: #b9966d;
+      --gold-2: #d9c29b;
+      --brown: #8d6a52;
+      --text: #2b2522;
+      --muted: #7d7169;
+      --line: rgba(95, 76, 62, 0.12);
+      --white: rgba(255, 255, 255, 0.92);
+      --green: #3f8f55;
+      --red: #c43b35;
+      --shadow: 0 18px 45px rgba(54, 38, 29, 0.13);
+      --radius-lg: 28px;
+      --radius-md: 20px;
+    }
+
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Arial, "Noto Sans TC", sans-serif;
       background:
-        radial-gradient(circle at top, #f6ede6 0%, #f3eee9 35%, #eee8e2 100%);
-      color: #2d2622;
+        radial-gradient(circle at top left, rgba(217, 194, 155, 0.42), transparent 34%),
+        radial-gradient(circle at top right, rgba(60, 47, 41, 0.18), transparent 30%),
+        linear-gradient(180deg, #f8f0e8 0%, #f0e8df 42%, #ece2d8 100%);
+      color: var(--text);
     }
 
-    .container {
+    .page {
       max-width: 560px;
       margin: 0 auto;
-      padding: 20px 16px 40px;
+      padding: 18px 14px 44px;
     }
 
-    .hero {
-      background: linear-gradient(135deg, #2d2622 0%, #4c3a31 100%);
-      color: #fff;
-      border-radius: 28px;
-      padding: 26px 22px;
-      box-shadow: 0 14px 35px rgba(60, 44, 34, 0.22);
-      margin-bottom: 18px;
+    .brand-hero {
       position: relative;
       overflow: hidden;
+      padding: 28px 22px;
+      border-radius: 32px;
+      background:
+        linear-gradient(135deg, rgba(33, 27, 24, 0.98), rgba(62, 47, 39, 0.96)),
+        radial-gradient(circle at top right, rgba(217, 194, 155, 0.3), transparent 38%);
+      color: #fff;
+      box-shadow: 0 22px 55px rgba(33, 27, 24, 0.26);
+      margin-bottom: 16px;
     }
 
-    .hero::after {
+    .brand-hero::before {
       content: "";
       position: absolute;
-      right: -30px;
-      top: -30px;
+      width: 170px;
+      height: 170px;
+      right: -64px;
+      top: -64px;
+      border-radius: 999px;
+      border: 1px solid rgba(217, 194, 155, 0.34);
+      background: rgba(217, 194, 155, 0.06);
+    }
+
+    .brand-hero::after {
+      content: "";
+      position: absolute;
       width: 120px;
       height: 120px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 50%;
+      left: -55px;
+      bottom: -55px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.055);
     }
 
-    .hero-title {
-      font-size: 30px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+    .brand-label {
       position: relative;
       z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(217, 194, 155, 0.28);
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
     }
 
-    .hero-subtitle {
+    .brand-title {
+      position: relative;
+      z-index: 1;
+      font-size: 34px;
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: 0.3px;
+      margin: 0 0 10px;
+    }
+
+    .brand-subtitle {
+      position: relative;
+      z-index: 1;
+      color: rgba(255, 255, 255, 0.78);
       font-size: 14px;
-      line-height: 1.7;
-      color: rgba(255,255,255,0.85);
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    .reward-strip {
       position: relative;
       z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(217, 194, 155, 0.25);
+    }
+
+    .reward-title {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.66);
+      margin-bottom: 5px;
+    }
+
+    .reward-main {
+      font-size: 17px;
+      font-weight: 950;
+      color: #fff;
+    }
+
+    .reward-badge {
+      padding: 9px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      color: #211b18;
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
     }
 
     .card {
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(12px);
-      border-radius: 24px;
+      border-radius: var(--radius-lg);
       padding: 20px;
-      box-shadow: 0 10px 28px rgba(70, 52, 42, 0.08);
-      margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.6);
+      background: var(--white);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      backdrop-filter: blur(16px);
+      margin-bottom: 14px;
+    }
+
+    .card-flat {
+      box-shadow: 0 10px 30px rgba(54, 38, 29, 0.08);
     }
 
     .title {
       font-size: 24px;
-      font-weight: 900;
-      margin-bottom: 8px;
-      color: #2d2622;
-    }
-
-    .subtitle {
-      color: #7a6f67;
-      line-height: 1.7;
-      font-size: 14px;
-      word-break: break-word;
+      font-weight: 950;
+      color: var(--deep);
+      margin: 0 0 8px;
+      letter-spacing: -0.2px;
     }
 
     .section-title {
       font-size: 18px;
-      font-weight: 900;
-      margin-bottom: 12px;
-      color: #2d2622;
+      font-weight: 950;
+      color: var(--deep);
+      margin: 0 0 12px;
     }
 
-    .input-label {
+    .subtitle {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--muted);
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .field {
+      margin-top: 15px;
+    }
+
+    .field-label {
       font-size: 13px;
-      font-weight: 800;
-      color: #5f544d;
-      margin-top: 10px;
-      margin-bottom: 6px;
+      font-weight: 900;
+      color: #5c5049;
+      margin-bottom: 7px;
     }
 
-    input, select, textarea, button {
+    input,
+    select,
+    textarea,
+    button {
       width: 100%;
       font-size: 16px;
-      border-radius: 16px;
-      border: 1px solid #e5ddd7;
-      padding: 14px 14px;
+      font-family: inherit;
+      border-radius: 17px;
       outline: none;
-      background: #fff;
     }
 
-    input:focus, select:focus, textarea:focus {
-      border-color: #a88572;
-      box-shadow: 0 0 0 4px rgba(168,133,114,0.12);
+    input,
+    select,
+    textarea {
+      border: 1px solid rgba(115, 93, 77, 0.16);
+      background: #fff;
+      color: var(--text);
+      padding: 14px 14px;
+      transition: 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(185, 150, 109, 0.8);
+      box-shadow: 0 0 0 5px rgba(185, 150, 109, 0.12);
     }
 
     textarea {
       min-height: 96px;
       resize: vertical;
+      line-height: 1.5;
     }
 
     .birthday-grid {
       display: grid;
-      grid-template-columns: 1.4fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 4px;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      gap: 9px;
     }
 
     .btn {
-      border: none;
+      border: 0;
       cursor: pointer;
-      font-weight: 900;
-      letter-spacing: 0.3px;
-      transition: 0.2s ease;
+      font-weight: 950;
+      padding: 15px 16px;
+      margin-top: 14px;
+      transition: 0.18s ease;
+      letter-spacing: 0.2px;
     }
 
-    .btn:hover {
-      transform: translateY(-1px);
+    .btn:active {
+      transform: scale(0.985);
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #2d2622 0%, #46352c 100%);
       color: #fff;
-      padding: 15px 16px;
-      margin-top: 14px;
-      box-shadow: 0 8px 18px rgba(45, 38, 34, 0.18);
+      background: linear-gradient(135deg, var(--deep) 0%, var(--deep-2) 100%);
+      box-shadow: 0 12px 24px rgba(33, 27, 24, 0.18);
     }
 
     .btn-secondary {
-      background: linear-gradient(135deg, #a1745c 0%, #8e624c 100%);
       color: #fff;
-      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--brown) 0%, #6d4e3d 100%);
+      box-shadow: 0 10px 22px rgba(109, 78, 61, 0.15);
     }
 
     .btn-light {
-      background: #f4efea;
-      color: #2d2622;
-      border: 1px solid #e6ddd6;
-      padding: 14px 16px;
+      color: var(--deep);
+      background: #f6efe9;
+      border: 1px solid rgba(115, 93, 77, 0.14);
+      box-shadow: none;
     }
 
-    .hidden {
-      display: none;
+    .loading-card {
+      text-align: left;
     }
 
-    .progress-card {
-      background: linear-gradient(180deg, #fff 0%, #fbf8f5 100%);
-    }
-
-    .progress-top {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 12px;
+    .loader {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 3px solid rgba(185, 150, 109, 0.2);
+      border-top-color: var(--gold);
+      animation: spin 0.8s linear infinite;
       margin-bottom: 14px;
     }
 
-    .progress-number {
-      font-size: 40px;
-      font-weight: 900;
-      color: #2d2622;
-      line-height: 1;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
-    .progress-hint {
-      font-size: 13px;
-      color: #8b7f77;
-      line-height: 1.5;
+    .member-card {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background:
+        radial-gradient(circle at top right, rgba(217, 194, 155, 0.32), transparent 36%),
+        linear-gradient(135deg, #211b18 0%, #3d3029 100%);
+    }
+
+    .member-card::after {
+      content: "";
+      position: absolute;
+      width: 155px;
+      height: 155px;
+      right: -70px;
+      bottom: -70px;
+      border-radius: 50%;
+      border: 1px solid rgba(217, 194, 155, 0.23);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .member-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .member-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.58);
+      margin-bottom: 7px;
+    }
+
+    .member-name {
+      font-size: 25px;
+      font-weight: 950;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .member-pill {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      color: #241d19;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .progress-row {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .progress-number {
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 950;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .progress-copy {
       text-align: right;
+      color: rgba(255, 255, 255, 0.74);
+      line-height: 1.55;
+      font-size: 13px;
+      white-space: nowrap;
     }
 
     .bar {
-      background: #ece3dc;
+      position: relative;
+      z-index: 1;
       height: 12px;
       border-radius: 999px;
       overflow: hidden;
-      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.13);
+      margin: 12px 0 14px;
     }
 
     .bar-inner {
       height: 100%;
       border-radius: 999px;
-      background: linear-gradient(90deg, #8f6650 0%, #2d2622 100%);
+      background: linear-gradient(90deg, var(--gold), #fff1bd);
       width: 0%;
     }
 
     .member-meta {
-      margin-top: 14px;
-      padding: 14px;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .meta-item {
+      padding: 12px;
       border-radius: 18px;
-      background: #f7f2ee;
-      color: #6b6059;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .meta-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 5px;
+    }
+
+    .meta-value {
       font-size: 13px;
-      line-height: 1.8;
+      font-weight: 850;
+      color: rgba(255, 255, 255, 0.92);
+      word-break: break-word;
     }
 
     .task-category {
-      font-size: 17px;
-      font-weight: 900;
-      margin-top: 18px;
-      margin-bottom: 10px;
-      color: #2d2622;
+      font-size: 16px;
+      font-weight: 950;
+      color: var(--deep);
+      margin-top: 20px;
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-category::before {
+      content: "";
+      width: 7px;
+      height: 17px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--gold), var(--brown));
+      display: inline-block;
     }
 
     .task {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 18px;
-      background: #f7f3ef;
+      gap: 12px;
+      padding: 13px;
+      border-radius: 19px;
+      background: #fbf8f5;
+      border: 1px solid rgba(115, 93, 77, 0.09);
       margin: 8px 0;
-      border: 1px solid #f0e8e2;
     }
 
     .task.done {
-      background: #eef7ef;
-      border-color: #d8ead9;
+      background: linear-gradient(135deg, #eef8f1, #f7fbf8);
+      border-color: rgba(63, 143, 85, 0.16);
     }
 
     .task-left {
@@ -252,165 +473,201 @@
     }
 
     .task-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #e8ddd5;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: #eadfd6;
+      color: var(--brown);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-weight: 950;
       flex-shrink: 0;
     }
 
     .task.done .task-icon {
-      background: #63a167;
+      background: var(--green);
       color: #fff;
     }
 
     .task-name {
       font-size: 14px;
-      line-height: 1.5;
-      color: #2d2622;
+      line-height: 1.45;
+      font-weight: 760;
+      color: var(--text);
       word-break: break-word;
     }
 
     .badge {
       flex-shrink: 0;
-      font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: #ddd3cb;
-      color: #5c524c;
-      font-weight: 800;
+      background: #e9ded5;
+      color: #6e5b50;
+      font-size: 12px;
+      font-weight: 950;
       white-space: nowrap;
     }
 
     .task.done .badge {
-      background: #2f7d32;
+      background: var(--green);
       color: #fff;
     }
 
+    .staff-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
     .small {
+      margin-top: 9px;
       font-size: 13px;
-      color: #7a6f67;
-      line-height: 1.6;
+      color: var(--muted);
+      line-height: 1.65;
       white-space: pre-wrap;
       word-break: break-word;
-      margin-top: 8px;
     }
 
     .error {
-      color: #c32323;
-      font-weight: 800;
+      color: var(--red);
+      font-weight: 850;
       white-space: pre-wrap;
       word-break: break-word;
+      line-height: 1.65;
     }
 
     .success {
-      color: #198754;
-      font-weight: 800;
+      color: var(--green);
+      font-weight: 850;
       white-space: pre-wrap;
       word-break: break-word;
+      line-height: 1.65;
     }
 
-    hr {
-      border: none;
-      border-top: 1px solid #eee4dd;
+    .divider {
+      height: 1px;
+      background: var(--line);
       margin: 18px 0;
     }
 
-    @media (max-width: 480px) {
-      .container {
-        padding: 16px 12px 34px;
+    @media (max-width: 430px) {
+      .page {
+        padding: 14px 12px 36px;
       }
 
-      .hero {
-        padding: 22px 18px;
-        border-radius: 24px;
+      .brand-hero {
+        padding: 24px 18px;
+        border-radius: 28px;
       }
 
-      .hero-title {
-        font-size: 28px;
+      .brand-title {
+        font-size: 31px;
       }
 
-      .title {
-        font-size: 22px;
+      .reward-strip {
+        grid-template-columns: 1fr;
       }
 
-      .progress-number {
-        font-size: 34px;
+      .reward-badge {
+        width: fit-content;
       }
 
-      .progress-top {
-        align-items: flex-start;
-        flex-direction: column;
+      .progress-row {
+        grid-template-columns: 1fr;
       }
 
-      .progress-hint {
+      .progress-copy {
         text-align: left;
+      }
+
+      .member-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .birthday-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="hero">
-      <div class="hero-title">LOVE BETTER</div>
-      <div class="hero-subtitle">
-        完成 23 點任務即可獲得日本機票。<br>
-        新的相遇 / 新的自己 / 新的可能
+  <main class="page">
+    <section class="brand-hero">
+      <div class="brand-label">LOVE BETTER JOURNEY</div>
+      <h1 class="brand-title">關係探索旅程</h1>
+      <p class="brand-subtitle">
+        新的相遇，新的自己，新的可能。<br>
+        透過任務累積點數，完成本次旅程資格。
+      </p>
+
+      <div class="reward-strip">
+        <div>
+          <div class="reward-title">本次會員任務獎勵</div>
+          <div class="reward-main">完成 23 點任務，即可獲得日本機票資格</div>
+        </div>
+        <div class="reward-badge">23 POINTS</div>
       </div>
-    </div>
+    </section>
 
-    <div id="loading" class="card">
-      <div class="title">載入中</div>
-      <div class="subtitle">正在讀取你的會員資料...</div>
-    </div>
+    <section id="loading" class="card loading-card">
+      <div class="loader"></div>
+      <div class="title">正在載入</div>
+      <p class="subtitle">系統正在讀取你的 LINE 會員資料。</p>
+    </section>
 
-    <div id="registerView" class="card hidden">
-      <div class="title">會員註冊</div>
-      <div class="subtitle">
-        完成會員建檔後，即可開始累積任務點數。
-      </div>
+    <section id="registerView" class="card hidden">
+      <div class="title">開啟我的探索旅程</div>
+      <p class="subtitle">
+        完成會員建檔後，即可開始累積任務點數。資料將用於會員身份綁定與點數紀錄。
+      </p>
 
-      <div class="input-label">真實姓名</div>
-      <input id="name" placeholder="請輸入姓名" />
-
-      <div class="input-label">手機號碼</div>
-      <input id="phone" placeholder="請輸入手機號碼" inputmode="tel" />
-
-      <div class="input-label">出生年月日</div>
-      <div class="birthday-grid">
-        <select id="birthYear">
-          <option value="">年份</option>
-        </select>
-        <select id="birthMonth">
-          <option value="">月份</option>
-        </select>
-        <select id="birthDay">
-          <option value="">日期</option>
-        </select>
+      <div class="field">
+        <div class="field-label">真實姓名</div>
+        <input id="name" placeholder="請輸入姓名" />
       </div>
 
-      <div class="input-label">性別</div>
-      <select id="gender">
-        <option value="">請選擇性別</option>
-        <option value="男">男</option>
-        <option value="女">女</option>
-      </select>
+      <div class="field">
+        <div class="field-label">手機號碼</div>
+        <input id="phone" placeholder="請輸入手機號碼，例如 0912345678" inputmode="tel" />
+      </div>
 
-      <button class="btn btn-primary" onclick="submitRegister()">完成會員註冊</button>
+      <div class="field">
+        <div class="field-label">出生年月日</div>
+        <div class="birthday-grid">
+          <select id="birthYear">
+            <option value="">年份</option>
+          </select>
+          <select id="birthMonth">
+            <option value="">月份</option>
+          </select>
+          <select id="birthDay">
+            <option value="">日期</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">性別</div>
+        <select id="gender">
+          <option value="">請選擇性別</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitRegister()">開啟我的探索旅程</button>
       <div id="registerMsg" class="small"></div>
-    </div>
+    </section>
 
-    <div id="memberView" class="hidden"></div>
+    <section id="memberView" class="hidden"></section>
 
-    <div class="card">
+    <section class="card card-flat">
       <button class="btn btn-light" onclick="openStaffPanel()">工作人員模式</button>
-      <div id="staffView" class="hidden"></div>
-    </div>
-  </div>
+      <div id="staffView" class="hidden staff-panel"></div>
+    </section>
+  </main>
 
   <script>
     const LIFF_ID = "2010383114-PRFsKe7Y";
@@ -421,12 +678,14 @@
 
     function setLoading(message) {
       document.getElementById("loading").innerHTML = `
+        <div class="loader"></div>
         <div class="title">處理中</div>
-        <div class="subtitle">${message}</div>
+        <p class="subtitle">${message}</p>
       `;
     }
 
     function showError(message) {
+      document.getElementById("loading").classList.remove("hidden");
       document.getElementById("loading").innerHTML = `
         <div class="title">系統錯誤</div>
         <div class="error">${message}</div>
@@ -441,6 +700,10 @@
       const yearSelect = document.getElementById("birthYear");
       const monthSelect = document.getElementById("birthMonth");
       const daySelect = document.getElementById("birthDay");
+
+      if (!yearSelect || yearSelect.dataset.ready === "true") return;
+
+      yearSelect.dataset.ready = "true";
 
       const currentYear = new Date().getFullYear();
 
@@ -459,6 +722,7 @@
       }
 
       function renderDays() {
+        const selectedDay = daySelect.value;
         daySelect.innerHTML = '<option value="">日期</option>';
 
         const year = parseInt(yearSelect.value, 10);
@@ -473,6 +737,10 @@
           option.value = pad2(d);
           option.textContent = d + "日";
           daySelect.appendChild(option);
+        }
+
+        if (selectedDay && Number(selectedDay) <= lastDay) {
+          daySelect.value = selectedDay;
         }
       }
 
@@ -506,7 +774,7 @@
       try {
         populateBirthdayOptions();
 
-        setLoading("1/3 正在初始化 LINE 會員身分...");
+        setLoading("正在初始化 LINE 會員身分...");
 
         await liff.init({ liffId: LIFF_ID });
 
@@ -522,7 +790,7 @@
           throw new Error("抓不到 LINE Access Token");
         }
 
-        setLoading("2/3 已取得 LINE 身分，讀取會員資料中...");
+        setLoading("已取得 LINE 身分，正在讀取會員資料...");
 
         MY_CARD = await api("getMyCard");
 
@@ -601,15 +869,20 @@
       });
 
       view.innerHTML = `
-        <div class="card progress-card">
-          <div class="title">LOVE BETTER 會員卡</div>
-          <div class="subtitle">${data.member.name}，你的關係探索旅程進度如下。</div>
+        <div class="card member-card">
+          <div class="member-top">
+            <div>
+              <div class="member-label">LOVE BETTER MEMBER</div>
+              <div class="member-name">${data.member.name}</div>
+            </div>
+            <div class="member-pill">${data.member.gender || "會員"}</div>
+          </div>
 
-          <div class="progress-top">
+          <div class="progress-row">
             <div class="progress-number">${data.completedPoints} / ${data.totalPoints}</div>
-            <div class="progress-hint">
+            <div class="progress-copy">
               還差 ${data.remainingPoints} 點<br>
-              完成日本機票資格
+              完成本次日本機票資格
             </div>
           </div>
 
@@ -618,14 +891,20 @@
           </div>
 
           <div class="member-meta">
-            會員編號：${data.member.memberId}<br>
-            會員性別：${data.member.gender}<br>
-            LINE 名稱：${data.profile.lineName || ""}
+            <div class="meta-item">
+              <div class="meta-label">會員編號</div>
+              <div class="meta-value">${data.member.memberId}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">LINE 名稱</div>
+              <div class="meta-value">${data.profile.lineName || "—"}</div>
+            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="section-title">任務完成狀態</div>
+          <p class="subtitle">完成任務後，將由工作人員審核或發放點數。</p>
           ${taskHtml}
         </div>
       `;
@@ -652,33 +931,64 @@
       }).join("");
 
       staffView.innerHTML = `
-        <div class="title">工作人員發放任務</div>
+        <div class="section-title">工作人員發放任務</div>
+        <p class="subtitle">輸入會員手機號碼，選擇完成任務後即可發放點數。</p>
 
-        <div class="task-category">單一會員發放</div>
-        <input id="singleMemberId" placeholder="輸入會員編號，例如 LOVE0001">
-        <select id="singleTaskId">${taskOptions}</select>
-        <textarea id="singleNote" placeholder="備註，例如 6/22 精選活動完成"></textarea>
-        <button class="btn btn-secondary" onclick="grantSingle()">發放給單一會員</button>
+        <div class="field">
+          <div class="field-label">會員手機號碼</div>
+          <input id="singlePhone" placeholder="例如 0912345678" inputmode="tel">
+        </div>
+
+        <div class="field">
+          <div class="field-label">完成任務</div>
+          <select id="singleTaskId">${taskOptions}</select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">備註</div>
+          <textarea id="singleNote" placeholder="例如：6/22 精選活動完成"></textarea>
+        </div>
+
+        <button class="btn btn-secondary" onclick="grantSingle()">確認發放點數</button>
         <div id="singleMsg" class="small"></div>
 
-        <hr>
+        <div class="divider"></div>
 
-        <div class="task-category">集體發放</div>
-        <select id="bulkMode">
-          <option value="all">全部會員</option>
-          <option value="gender">依性別發放</option>
-          <option value="ids">貼上會員 ID 批量發放</option>
-        </select>
+        <div class="section-title">集體發放</div>
 
-        <select id="bulkGender">
-          <option value="男">男</option>
-          <option value="女">女</option>
-        </select>
+        <div class="field">
+          <div class="field-label">發放模式</div>
+          <select id="bulkMode">
+            <option value="all">全部會員</option>
+            <option value="gender">依性別發放</option>
+            <option value="ids">貼上會員 ID 批量發放</option>
+          </select>
+        </div>
 
-        <textarea id="bulkMemberIds" placeholder="若選擇貼上會員 ID，請輸入 LOVE0001、LOVE0002，可換行"></textarea>
-        <select id="bulkTaskId">${taskOptions}</select>
-        <textarea id="bulkNote" placeholder="備註，例如 6/22 活動集體完成"></textarea>
-        <button class="btn btn-secondary" onclick="grantBulk()">集體發放</button>
+        <div class="field">
+          <div class="field-label">性別篩選</div>
+          <select id="bulkGender">
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">會員 ID 批量輸入</div>
+          <textarea id="bulkMemberIds" placeholder="若選擇會員 ID 批量發放，請輸入 LOVE0001、LOVE0002，可換行"></textarea>
+        </div>
+
+        <div class="field">
+          <div class="field-label">完成任務</div>
+          <select id="bulkTaskId">${taskOptions}</select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">備註</div>
+          <textarea id="bulkNote" placeholder="例如：6/22 活動集體完成"></textarea>
+        </div>
+
+        <button class="btn btn-secondary" onclick="grantBulk()">集體發放點數</button>
         <div id="bulkMsg" class="small"></div>
       `;
     }
@@ -689,7 +999,7 @@
 
       try {
         const result = await api("grantTaskToMember", {
-          memberId: document.getElementById("singleMemberId").value.trim(),
+          memberId: document.getElementById("singlePhone").value.trim(),
           taskId: document.getElementById("singleTaskId").value,
           note: document.getElementById("singleNote").value.trim()
         });
