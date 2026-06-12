@@ -40,9 +40,97 @@
       word-break: break-all;
     }
 
-    .success {
-      color: #198754;
+    .progress {
+      font-size: 38px;
+      font-weight: 900;
+      margin: 12px 0;
+    }
+
+    .bar {
+      background: #e7ded6;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+    }
+
+    .bar-inner {
+      height: 100%;
+      background: #a66b4f;
+      width: 0%;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      margin: 8px 0;
+    }
+
+    button {
+      background: #2b2522;
+      color: white;
+      border: none;
       font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #a66b4f;
+    }
+
+    button.light {
+      background: #eee;
+      color: #2b2522;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .task-category {
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f7f3ee;
+      margin: 8px 0;
+      gap: 8px;
+    }
+
+    .done {
+      background: #e7f3e7;
+    }
+
+    .badge {
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ddd;
+      white-space: nowrap;
+    }
+
+    .done .badge {
+      background: #2f7d32;
+      color: #fff;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #7b6f68;
+      line-height: 1.5;
+      word-break: break-all;
     }
 
     .error {
@@ -52,102 +140,313 @@
       word-break: break-all;
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .profile img {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    button {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 16px;
-      padding: 12px;
-      border-radius: 12px;
-      border: none;
-      margin-top: 12px;
-      background: #2b2522;
-      color: #fff;
+    .success {
+      color: #198754;
       font-weight: 800;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <div class="card">
+    <div id="loading" class="card">
       <div class="title">LOVE BETTER</div>
-      <div id="status" class="subtitle">1/4 網站載入中...</div>
+      <div class="subtitle">會員資料讀取中...</div>
     </div>
 
-    <div id="result" class="card" style="display:none;"></div>
+    <div id="registerView" class="card hidden">
+      <div class="title">LOVE BETTER 關係探索旅程</div>
+      <div class="subtitle">
+        完成會員建檔後，就可以開始累積 23 點任務。
+      </div>
+
+      <input id="name" placeholder="真實姓名">
+      <input id="phone" placeholder="手機號碼">
+      <input id="birthday" type="date">
+
+      <select id="gender">
+        <option value="">請選擇性別</option>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+
+      <button onclick="submitRegister()">完成會員註冊</button>
+      <div id="registerMsg" class="small"></div>
+    </div>
+
+    <div id="memberView" class="hidden"></div>
+
+    <div class="card">
+      <button class="light" onclick="openStaffPanel()">工作人員模式</button>
+      <div id="staffView" class="hidden"></div>
+    </div>
   </div>
 
   <script>
     const LIFF_ID = "2010383114-PRFsKe7Y";
 
-    function setStatus(message) {
-      document.getElementById("status").innerHTML = message;
+    let ACCESS_TOKEN = "";
+    let MY_CARD = null;
+    let STAFF_DATA = null;
+
+    function setLoading(message) {
+      document.getElementById("loading").innerHTML = `
+        <div class="title">LOVE BETTER</div>
+        <div class="subtitle">${message}</div>
+      `;
     }
 
-    function showResult(html) {
-      const result = document.getElementById("result");
-      result.style.display = "block";
-      result.innerHTML = html;
+    function showError(message) {
+      document.getElementById("loading").innerHTML = `
+        <div class="title">系統錯誤</div>
+        <div class="error">${message}</div>
+      `;
+    }
+
+    async function api(action, payload = {}) {
+      const response = await fetch("/api/gas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          accessToken: ACCESS_TOKEN,
+          payload,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.ok) {
+        throw new Error(result.error || "API 發生錯誤");
+      }
+
+      return result.data;
     }
 
     async function init() {
       try {
-        setStatus("2/4 LIFF 初始化中...<br>LIFF ID：" + LIFF_ID);
+        setLoading("1/4 LIFF 初始化中...");
 
         await liff.init({ liffId: LIFF_ID });
 
-        setStatus("3/4 LIFF 初始化成功，檢查登入狀態...");
-
         if (!liff.isLoggedIn()) {
-          setStatus("尚未登入 LINE，正在導向 LINE 登入...");
+          setLoading("尚未登入 LINE，正在導向登入...");
           liff.login();
           return;
         }
 
-        setStatus("4/4 LINE 登入成功，讀取個人資料中...");
+        ACCESS_TOKEN = liff.getAccessToken();
 
-        const profile = await liff.getProfile();
-        const accessToken = liff.getAccessToken();
-
-        if (!accessToken) {
+        if (!ACCESS_TOKEN) {
           throw new Error("抓不到 LINE Access Token");
         }
 
-        setStatus('<span class="success">LIFF 測試成功</span><br>這代表 Vercel 前台可以正常綁 LINE。');
+        setLoading("2/4 LINE 身分取得成功，讀取會員資料中...");
 
-        showResult(`
-          <div class="title">會員身分測試成功</div>
-          <div class="profile">
-            <img src="${profile.pictureUrl || ""}">
-            <div>
-              <div><strong>${profile.displayName || "未取得名稱"}</strong></div>
-              <div class="subtitle">LINE userId：${profile.userId}</div>
-            </div>
-          </div>
+        MY_CARD = await api("getMyCard");
 
-          <button onclick="location.reload()">重新整理</button>
-        `);
+        document.getElementById("loading").classList.add("hidden");
+
+        if (!MY_CARD.registered) {
+          document.getElementById("registerView").classList.remove("hidden");
+          return;
+        }
+
+        renderMemberCard(MY_CARD);
 
       } catch (error) {
-        setStatus(`
-          <span class="error">系統錯誤</span><br>
-          ${error.message || error}<br><br>
-          目前網址：${window.location.href}
-        `);
+        showError(error.message || error);
+      }
+    }
+
+    async function submitRegister() {
+      const msg = document.getElementById("registerMsg");
+      msg.innerHTML = "送出中...";
+
+      const form = {
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        birthday: document.getElementById("birthday").value,
+        gender: document.getElementById("gender").value,
+      };
+
+      if (!form.name || !form.phone || !form.gender) {
+        msg.innerHTML = '<span class="error">姓名、手機、性別必填</span>';
+        return;
+      }
+
+      try {
+        MY_CARD = await api("registerMember", form);
+        document.getElementById("registerView").classList.add("hidden");
+        renderMemberCard(MY_CARD);
+      } catch (error) {
+        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
+      }
+    }
+
+    function renderMemberCard(data) {
+      const view = document.getElementById("memberView");
+      view.classList.remove("hidden");
+
+      const percent = data.totalPoints > 0
+        ? Math.min(100, Math.round((data.completedPoints / data.totalPoints) * 100))
+        : 0;
+
+      const grouped = {};
+      data.tasks.forEach(task => {
+        if (!grouped[task.category]) grouped[task.category] = [];
+        grouped[task.category].push(task);
+      });
+
+      let taskHtml = "";
+
+      Object.keys(grouped).forEach(category => {
+        taskHtml += `<div class="task-category">${category}</div>`;
+
+        grouped[category].forEach(task => {
+          taskHtml += `
+            <div class="task ${task.completed ? "done" : ""}">
+              <div>${task.completed ? "✓" : "□"} ${task.taskName}</div>
+              <div class="badge">${task.completed ? "已完成" : "+ " + task.points}</div>
+            </div>
+          `;
+        });
+      });
+
+      view.innerHTML = `
+        <div class="card">
+          <div class="title">LOVE BETTER 會員卡</div>
+          <div class="subtitle">
+            ${data.member.name}，你的關係探索旅程進度如下。
+          </div>
+
+          <div class="progress">${data.completedPoints} / ${data.totalPoints}</div>
+
+          <div class="bar">
+            <div class="bar-inner" style="width:${percent}%"></div>
+          </div>
+
+          <div class="small">還差 ${data.remainingPoints} 點完成日本機票資格</div>
+
+          <hr>
+
+          <div class="small">
+            會員編號：${data.member.memberId}<br>
+            會員性別：${data.member.gender}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">任務完成狀態</div>
+          ${taskHtml}
+        </div>
+      `;
+    }
+
+    async function openStaffPanel() {
+      const staffView = document.getElementById("staffView");
+      staffView.classList.remove("hidden");
+      staffView.innerHTML = '<div class="small">工作人員資料讀取中...</div>';
+
+      try {
+        STAFF_DATA = await api("getStaffPanelData");
+        renderStaffPanel();
+      } catch (error) {
+        staffView.innerHTML = `<div class="error">${error.message || error}</div>`;
+      }
+    }
+
+    function renderStaffPanel() {
+      const staffView = document.getElementById("staffView");
+
+      const taskOptions = STAFF_DATA.tasks.map(task => {
+        return `<option value="${task.taskId}">${task.gender}｜${task.category}｜${task.taskName}</option>`;
+      }).join("");
+
+      staffView.innerHTML = `
+        <div class="title">工作人員發放任務</div>
+
+        <div class="task-category">單一會員發放</div>
+
+        <input id="singleMemberId" placeholder="輸入會員編號，例如 LOVE0001">
+
+        <select id="singleTaskId">${taskOptions}</select>
+
+        <textarea id="singleNote" placeholder="備註，例如 6/22 精選活動完成"></textarea>
+
+        <button class="secondary" onclick="grantSingle()">發放給單一會員</button>
+
+        <div id="singleMsg" class="small"></div>
+
+        <hr>
+
+        <div class="task-category">集體發放</div>
+
+        <select id="bulkMode">
+          <option value="all">全部會員</option>
+          <option value="gender">依性別發放</option>
+          <option value="ids">貼上會員 ID 批量發放</option>
+        </select>
+
+        <select id="bulkGender">
+          <option value="男">男</option>
+          <option value="女">女</option>
+        </select>
+
+        <textarea id="bulkMemberIds" placeholder="若選擇貼上會員 ID，請輸入 LOVE0001、LOVE0002，可換行"></textarea>
+
+        <select id="bulkTaskId">${taskOptions}</select>
+
+        <textarea id="bulkNote" placeholder="備註，例如 6/22 活動集體完成"></textarea>
+
+        <button class="secondary" onclick="grantBulk()">集體發放</button>
+
+        <div id="bulkMsg" class="small"></div>
+      `;
+    }
+
+    async function grantSingle() {
+      const msg = document.getElementById("singleMsg");
+      msg.innerHTML = "發放中...";
+
+      try {
+        const result = await api("grantTaskToMember", {
+          memberId: document.getElementById("singleMemberId").value.trim(),
+          taskId: document.getElementById("singleTaskId").value,
+          note: document.getElementById("singleNote").value.trim(),
+        });
+
+        msg.innerHTML = `<span class="success">${result.message}</span>`;
+      } catch (error) {
+        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
+      }
+    }
+
+    async function grantBulk() {
+      const msg = document.getElementById("bulkMsg");
+      msg.innerHTML = "集體發放中...";
+
+      try {
+        const result = await api("bulkGrantTask", {
+          mode: document.getElementById("bulkMode").value,
+          gender: document.getElementById("bulkGender").value,
+          memberIds: document.getElementById("bulkMemberIds").value,
+          taskId: document.getElementById("bulkTaskId").value,
+          note: document.getElementById("bulkNote").value.trim(),
+        });
+
+        msg.innerHTML = `
+          <span class="success">
+            發放完成<br>
+            新增：${result.addedCount} 筆<br>
+            已完成略過：${result.skippedCount} 筆
+          </span>
+        `;
+      } catch (error) {
+        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
       }
     }
 
