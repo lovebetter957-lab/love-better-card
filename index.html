@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOVE BETTER 會員集點卡</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans TC", sans-serif;
+      background: #f7f3ee;
+      color: #2b2522;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #7b6f68;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    .success {
+      color: #198754;
+      font-weight: 800;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: 800;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .profile img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      margin-top: 12px;
+      background: #2b2522;
+      color: #fff;
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="title">LOVE BETTER</div>
+      <div id="status" class="subtitle">1/4 網站載入中...</div>
+    </div>
+
+    <div id="result" class="card" style="display:none;"></div>
+  </div>
+
+  <script>
+    const LIFF_ID = "2010383114-PRFsKe7Y";
+
+    function setStatus(message) {
+      document.getElementById("status").innerHTML = message;
+    }
+
+    function showResult(html) {
+      const result = document.getElementById("result");
+      result.style.display = "block";
+      result.innerHTML = html;
+    }
+
+    async function init() {
+      try {
+        setStatus("2/4 LIFF 初始化中...<br>LIFF ID：" + LIFF_ID);
+
+        await liff.init({ liffId: LIFF_ID });
+
+        setStatus("3/4 LIFF 初始化成功，檢查登入狀態...");
+
+        if (!liff.isLoggedIn()) {
+          setStatus("尚未登入 LINE，正在導向 LINE 登入...");
+          liff.login();
+          return;
+        }
+
+        setStatus("4/4 LINE 登入成功，讀取個人資料中...");
+
+        const profile = await liff.getProfile();
+        const accessToken = liff.getAccessToken();
+
+        if (!accessToken) {
+          throw new Error("抓不到 LINE Access Token");
+        }
+
+        setStatus('<span class="success">LIFF 測試成功</span><br>這代表 Vercel 前台可以正常綁 LINE。');
+
+        showResult(`
+          <div class="title">會員身分測試成功</div>
+          <div class="profile">
+            <img src="${profile.pictureUrl || ""}">
+            <div>
+              <div><strong>${profile.displayName || "未取得名稱"}</strong></div>
+              <div class="subtitle">LINE userId：${profile.userId}</div>
+            </div>
+          </div>
+
+          <button onclick="location.reload()">重新整理</button>
+        `);
+
+      } catch (error) {
+        setStatus(`
+          <span class="error">系統錯誤</span><br>
+          ${error.message || error}<br><br>
+          目前網址：${window.location.href}
+        `);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
