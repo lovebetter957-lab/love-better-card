@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LOVE BETTER 會員集點卡</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-  <style>
+<style>
     :root {
       --bg: #f4eee8;
       --bg-soft: #fbf7f2;
@@ -589,11 +588,89 @@
         grid-template-columns: 1fr;
       }
     }
+  
+
+    /* ===== LOVE BETTER 首頁登入覆蓋畫面 ===== */
+    .login-cover {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      overflow-y: auto;
+      background: #f59abc;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .login-cover.is-hidden {
+      display: none;
+    }
+    
+    .login-cover-frame {
+      position: relative;
+      width: min(100%, 460px);
+      min-height: 100dvh;
+      margin: 0 auto;
+    }
+    
+    .login-cover-image {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    
+    .login-cover-button {
+      position: absolute;
+      top: 75.6%;
+      width: 42%;
+      height: 5.2%;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .login-cover-button.member {
+      left: 3.8%;
+    }
+    
+    .login-cover-button.staff {
+      right: 3.8%;
+    }
+    
+    .login-cover-button:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+    }
   </style>
 </head>
 
 <body>
-  <main class="page">
+  
+  <div id="loginCover" class="login-cover">
+    <div class="login-cover-frame">
+      <img
+        class="login-cover-image"
+        src="./assets/6月29日(3)-2.gif"
+        alt="LOVE BETTER 關係探索旅程"
+      >
+  
+      <button
+        class="login-cover-button member"
+        type="button"
+        onclick="enterMemberJourney()"
+        aria-label="會員登入"
+      ></button>
+  
+      <button
+        class="login-cover-button staff"
+        type="button"
+        onclick="enterStaffJourney()"
+        aria-label="工作人員登入"
+      ></button>
+    </div>
+  </div>
+
+<main class="page">
     <section class="brand-hero">
       <div class="brand-label">LOVE BETTER JOURNEY</div>
       <h1 class="brand-title">關係探索旅程</h1>
@@ -601,7 +678,7 @@
         新的相遇，新的自己，新的可能。<br>
         透過任務累積點數，完成本次旅程資格。
       </p>
-
+      
       <div class="reward-strip">
         <div>
           <div class="reward-title">本次會員任務獎勵</div>
@@ -1035,6 +1112,33 @@
       }
     }
 
+    function closeLoginCover() {
+  const cover = document.getElementById("loginCover");
+
+  if (cover) {
+    cover.classList.add("is-hidden");
+  }
+}
+
+function enterMemberJourney() {
+  closeLoginCover();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function enterStaffJourney() {
+  closeLoginCover();
+
+  setTimeout(function() {
+    if (typeof openStaffPanel === "function") {
+      openStaffPanel();
+    }
+  }, 200);
+}
+    
     init();
   </script>
 </body>
