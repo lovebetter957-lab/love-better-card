@@ -5,24 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LOVE BETTER 會員集點卡</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<style>
+
+  <style>
     :root {
-      --bg: #f4eee8;
-      --bg-soft: #fbf7f2;
-      --deep: #211b18;
-      --deep-2: #3c2f29;
-      --gold: #b9966d;
-      --gold-2: #d9c29b;
-      --brown: #8d6a52;
-      --text: #2b2522;
-      --muted: #7d7169;
-      --line: rgba(95, 76, 62, 0.12);
-      --white: rgba(255, 255, 255, 0.92);
-      --green: #3f8f55;
-      --red: #c43b35;
-      --shadow: 0 18px 45px rgba(54, 38, 29, 0.13);
-      --radius-lg: 28px;
-      --radius-md: 20px;
+      --pink: #ed5e9d;
+      --pink-dark: #d7498b;
+      --pink-soft: #f8c6d9;
+      --pink-pale: #fff3f8;
+      --ink: #32272c;
+      --muted: #83727a;
+      --line: #f2d7e2;
+      --white: #ffffff;
+      --green: #45a865;
+      --danger: #c63855;
+      --shadow: 0 16px 38px rgba(153, 58, 103, 0.16);
     }
 
     * {
@@ -30,567 +26,39 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      background: #f6a5c5;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      font-family: Arial, "Noto Sans TC", "PingFang TC", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(217, 194, 155, 0.42), transparent 34%),
-        radial-gradient(circle at top right, rgba(60, 47, 41, 0.18), transparent 30%),
-        linear-gradient(180deg, #f8f0e8 0%, #f0e8df 42%, #ece2d8 100%);
-      color: var(--text);
+        radial-gradient(circle at 16% 6%, rgba(255,255,255,0.38), transparent 22%),
+        radial-gradient(circle at 94% 20%, rgba(255,255,255,0.24), transparent 26%),
+        linear-gradient(180deg, #f7bfd4 0%, #ef83b2 52%, #f5a5c4 100%);
     }
 
-    .page {
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 18px 14px 44px;
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
     }
 
-    .brand-hero {
-      position: relative;
-      overflow: hidden;
-      padding: 28px 22px;
-      border-radius: 32px;
-      background:
-        linear-gradient(135deg, rgba(33, 27, 24, 0.98), rgba(62, 47, 39, 0.96)),
-        radial-gradient(circle at top right, rgba(217, 194, 155, 0.3), transparent 38%);
-      color: #fff;
-      box-shadow: 0 22px 55px rgba(33, 27, 24, 0.26);
-      margin-bottom: 16px;
-    }
-
-    .brand-hero::before {
-      content: "";
-      position: absolute;
-      width: 170px;
-      height: 170px;
-      right: -64px;
-      top: -64px;
-      border-radius: 999px;
-      border: 1px solid rgba(217, 194, 155, 0.34);
-      background: rgba(217, 194, 155, 0.06);
-    }
-
-    .brand-hero::after {
-      content: "";
-      position: absolute;
-      width: 120px;
-      height: 120px;
-      left: -55px;
-      bottom: -55px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.055);
-    }
-
-    .brand-label {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.09);
-      border: 1px solid rgba(217, 194, 155, 0.28);
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-bottom: 18px;
-    }
-
-    .brand-title {
-      position: relative;
-      z-index: 1;
-      font-size: 34px;
-      line-height: 1.05;
-      font-weight: 950;
-      letter-spacing: 0.3px;
-      margin: 0 0 10px;
-    }
-
-    .brand-subtitle {
-      position: relative;
-      z-index: 1;
-      color: rgba(255, 255, 255, 0.78);
-      font-size: 14px;
-      line-height: 1.75;
-      margin: 0;
-    }
-
-    .reward-strip {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 12px;
-      margin-top: 22px;
-      padding: 14px;
-      border-radius: 22px;
-      background: rgba(255, 255, 255, 0.09);
-      border: 1px solid rgba(217, 194, 155, 0.25);
-    }
-
-    .reward-title {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.66);
-      margin-bottom: 5px;
-    }
-
-    .reward-main {
-      font-size: 17px;
-      font-weight: 950;
-      color: #fff;
-    }
-
-    .reward-badge {
-      padding: 9px 11px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-2));
-      color: #211b18;
-      font-size: 12px;
-      font-weight: 950;
-      white-space: nowrap;
-    }
-
-    .card {
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      background: var(--white);
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255, 255, 255, 0.68);
-      backdrop-filter: blur(16px);
-      margin-bottom: 14px;
-    }
-
-    .card-flat {
-      box-shadow: 0 10px 30px rgba(54, 38, 29, 0.08);
-    }
-
-    .title {
-      font-size: 24px;
-      font-weight: 950;
-      color: var(--deep);
-      margin: 0 0 8px;
-      letter-spacing: -0.2px;
-    }
-
-    .section-title {
-      font-size: 18px;
-      font-weight: 950;
-      color: var(--deep);
-      margin: 0 0 12px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      line-height: 1.75;
-      color: var(--muted);
-      margin: 0;
-      word-break: break-word;
+    button {
+      cursor: pointer;
     }
 
     .hidden {
       display: none !important;
     }
 
-    .field {
-      margin-top: 15px;
-    }
-
-    .field-label {
-      font-size: 13px;
-      font-weight: 900;
-      color: #5c5049;
-      margin-bottom: 7px;
-    }
-
-    input,
-    select,
-    textarea,
-    button {
-      width: 100%;
-      font-size: 16px;
-      font-family: inherit;
-      border-radius: 17px;
-      outline: none;
-    }
-
-    input,
-    select,
-    textarea {
-      border: 1px solid rgba(115, 93, 77, 0.16);
-      background: #fff;
-      color: var(--text);
-      padding: 14px 14px;
-      transition: 0.2s ease;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: rgba(185, 150, 109, 0.8);
-      box-shadow: 0 0 0 5px rgba(185, 150, 109, 0.12);
-    }
-
-    textarea {
-      min-height: 96px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-
-    .birthday-grid {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr 1fr;
-      gap: 9px;
-    }
-
-    .btn {
-      border: 0;
-      cursor: pointer;
-      font-weight: 950;
-      padding: 15px 16px;
-      margin-top: 14px;
-      transition: 0.18s ease;
-      letter-spacing: 0.2px;
-    }
-
-    .btn:active {
-      transform: scale(0.985);
-    }
-
-    .btn-primary {
-      color: #fff;
-      background: linear-gradient(135deg, var(--deep) 0%, var(--deep-2) 100%);
-      box-shadow: 0 12px 24px rgba(33, 27, 24, 0.18);
-    }
-
-    .btn-secondary {
-      color: #fff;
-      background: linear-gradient(135deg, var(--brown) 0%, #6d4e3d 100%);
-      box-shadow: 0 10px 22px rgba(109, 78, 61, 0.15);
-    }
-
-    .btn-light {
-      color: var(--deep);
-      background: #f6efe9;
-      border: 1px solid rgba(115, 93, 77, 0.14);
-      box-shadow: none;
-    }
-
-    .loading-card {
-      text-align: left;
-    }
-
-    .loader {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 3px solid rgba(185, 150, 109, 0.2);
-      border-top-color: var(--gold);
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 14px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .member-card {
-      position: relative;
-      overflow: hidden;
-      color: #fff;
-      background:
-        radial-gradient(circle at top right, rgba(217, 194, 155, 0.32), transparent 36%),
-        linear-gradient(135deg, #211b18 0%, #3d3029 100%);
-    }
-
-    .member-card::after {
-      content: "";
-      position: absolute;
-      width: 155px;
-      height: 155px;
-      right: -70px;
-      bottom: -70px;
-      border-radius: 50%;
-      border: 1px solid rgba(217, 194, 155, 0.23);
-      background: rgba(255, 255, 255, 0.035);
-    }
-
-    .member-top {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .member-label {
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      color: rgba(255, 255, 255, 0.58);
-      margin-bottom: 7px;
-    }
-
-    .member-name {
-      font-size: 25px;
-      font-weight: 950;
-      color: #fff;
-      line-height: 1.2;
-    }
-
-    .member-pill {
-      flex-shrink: 0;
-      padding: 8px 10px;
-      border-radius: 999px;
-      color: #241d19;
-      background: linear-gradient(135deg, var(--gold), var(--gold-2));
-      font-size: 12px;
-      font-weight: 950;
-    }
-
-    .progress-row {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 14px;
-      align-items: end;
-      margin-bottom: 12px;
-    }
-
-    .progress-number {
-      font-size: 44px;
-      line-height: 1;
-      font-weight: 950;
-      color: #fff;
-      letter-spacing: -1px;
-    }
-
-    .progress-copy {
-      text-align: right;
-      color: rgba(255, 255, 255, 0.74);
-      line-height: 1.55;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    .bar {
-      position: relative;
-      z-index: 1;
-      height: 12px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.13);
-      margin: 12px 0 14px;
-    }
-
-    .bar-inner {
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--gold), #fff1bd);
-      width: 0%;
-    }
-
-    .member-meta {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .meta-item {
-      padding: 12px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .meta-label {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
-      margin-bottom: 5px;
-    }
-
-    .meta-value {
-      font-size: 13px;
-      font-weight: 850;
-      color: rgba(255, 255, 255, 0.92);
-      word-break: break-word;
-    }
-
-    .task-category {
-      font-size: 16px;
-      font-weight: 950;
-      color: var(--deep);
-      margin-top: 20px;
-      margin-bottom: 9px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .task-category::before {
-      content: "";
-      width: 7px;
-      height: 17px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, var(--gold), var(--brown));
-      display: inline-block;
-    }
-
-    .task {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 13px;
-      border-radius: 19px;
-      background: #fbf8f5;
-      border: 1px solid rgba(115, 93, 77, 0.09);
-      margin: 8px 0;
-    }
-
-    .task.done {
-      background: linear-gradient(135deg, #eef8f1, #f7fbf8);
-      border-color: rgba(63, 143, 85, 0.16);
-    }
-
-    .task-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
-    }
-
-    .task-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      background: #eadfd6;
-      color: var(--brown);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 950;
-      flex-shrink: 0;
-    }
-
-    .task.done .task-icon {
-      background: var(--green);
-      color: #fff;
-    }
-
-    .task-name {
-      font-size: 14px;
-      line-height: 1.45;
-      font-weight: 760;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    .badge {
-      flex-shrink: 0;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #e9ded5;
-      color: #6e5b50;
-      font-size: 12px;
-      font-weight: 950;
-      white-space: nowrap;
-    }
-
-    .task.done .badge {
-      background: var(--green);
-      color: #fff;
-    }
-
-    .staff-panel {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
-    }
-
-    .small {
-      margin-top: 9px;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.65;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .error {
-      color: var(--red);
-      font-weight: 850;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.65;
-    }
-
-    .success {
-      color: var(--green);
-      font-weight: 850;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.65;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--line);
-      margin: 18px 0;
-    }
-
-    @media (max-width: 430px) {
-      .page {
-        padding: 14px 12px 36px;
-      }
-
-      .brand-hero {
-        padding: 24px 18px;
-        border-radius: 28px;
-      }
-
-      .brand-title {
-        font-size: 31px;
-      }
-
-      .reward-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .reward-badge {
-        width: fit-content;
-      }
-
-      .progress-row {
-        grid-template-columns: 1fr;
-      }
-
-      .progress-copy {
-        text-align: left;
-      }
-
-      .member-meta {
-        grid-template-columns: 1fr;
-      }
-
-      .birthday-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  
-
-    /* ===== LOVE BETTER 首頁登入覆蓋畫面 ===== */
+    /* =====================================================
+       首頁封面：使用 GitHub assets/6月29日(3)-2.gif
+    ===================================================== */
     .login-cover {
       position: fixed;
       inset: 0;
@@ -599,53 +67,555 @@
       background: #f59abc;
       -webkit-overflow-scrolling: touch;
     }
-    
+
     .login-cover.is-hidden {
       display: none;
     }
-    
+
     .login-cover-frame {
       position: relative;
       width: min(100%, 460px);
       min-height: 100dvh;
       margin: 0 auto;
     }
-    
+
     .login-cover-image {
       display: block;
       width: 100%;
       height: auto;
     }
-    
+
     .login-cover-button {
       position: absolute;
       top: 75.6%;
       width: 42%;
       height: 5.2%;
+      margin: 0;
+      padding: 0;
       border: 0;
       border-radius: 999px;
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    
+
     .login-cover-button.member {
       left: 3.8%;
     }
-    
+
     .login-cover-button.staff {
       right: 3.8%;
     }
-    
+
     .login-cover-button:focus-visible {
       outline: 3px solid #fff;
       outline-offset: 4px;
+    }
+
+    /* =====================================================
+       網站內容
+    ===================================================== */
+    .app-shell {
+      width: min(100%, 480px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px 14px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-shell::before,
+    .app-shell::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      opacity: 0.28;
+      pointer-events: none;
+    }
+
+    .app-shell::before {
+      width: 360px;
+      height: 360px;
+      top: -140px;
+      right: -150px;
+      border: 42px solid rgba(255,255,255,0.34);
+      border-radius: 52% 48% 46% 54%;
+      transform: rotate(24deg);
+    }
+
+    .app-shell::after {
+      width: 390px;
+      height: 190px;
+      bottom: -70px;
+      left: -90px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.17);
+      transform: rotate(-12deg);
+    }
+
+    .surface {
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.96);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .loading-card,
+    .register-card,
+    .staff-card {
+      padding: 22px;
+      margin-bottom: 14px;
+    }
+
+    .loader {
+      width: 34px;
+      height: 34px;
+      border: 4px solid #f8c8da;
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.72s linear infinite;
+      margin-bottom: 14px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 23px;
+      line-height: 1.25;
+      font-weight: 950;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 800;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .success {
+      color: #257a44;
+      font-weight: 850;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* 註冊 */
+    .register-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mini-brand {
+      color: var(--pink-dark);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .field {
+      margin-top: 15px;
+    }
+
+    .field-label {
+      margin-bottom: 7px;
+      color: #6d5961;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #ebd5df;
+      border-radius: 16px;
+      outline: none;
+      background: #fff;
+      color: var(--ink);
+      padding: 14px;
+      transition: 0.18s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #ed76aa;
+      box-shadow: 0 0 0 4px rgba(237,94,157,0.14);
+    }
+
+    textarea {
+      min-height: 94px;
+      resize: vertical;
+    }
+
+    .birthday-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 14px;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 18px;
+      font-weight: 950;
+      transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.985);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, #f066a4, #d84689);
+      box-shadow: 0 10px 20px rgba(214,70,136,0.26);
+    }
+
+    .btn-soft {
+      color: #8d3e64;
+      background: #fff2f7;
+      border: 1px solid #f3c2d6;
+    }
+
+    .btn-dark {
+      color: #fff;
+      background: linear-gradient(135deg, #563b49, #2f252b);
+    }
+
+    .small {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* =====================================================
+       會員集點卡頁
+    ===================================================== */
+    .member-card {
+      overflow: hidden;
+      margin-bottom: 14px;
+      padding: 19px;
+      position: relative;
+    }
+
+    .member-card::before {
+      content: "";
+      position: absolute;
+      width: 270px;
+      height: 270px;
+      top: -136px;
+      right: -124px;
+      border-radius: 50%;
+      background: rgba(246, 163, 195, 0.17);
+    }
+
+    .member-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .member-brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .member-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #b34c7a;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+    }
+
+    .member-brand-icon {
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, #f49ac0, #df5d9a);
+      font-size: 14px;
+    }
+
+    .gender-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid #a0a0a0;
+      border-radius: 50%;
+      color: #8d8d8d;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .member-greeting {
+      margin-top: 18px;
+      color: #6f656a;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .member-progress {
+      margin-top: 2px;
+      color: #847d81;
+      font-size: 48px;
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -1.8px;
+    }
+
+    .member-progress span {
+      font-size: 27px;
+      letter-spacing: -0.5px;
+    }
+
+    .progress-note {
+      margin-top: 13px;
+      color: #897d83;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .route-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      color: var(--pink);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.7px;
+    }
+
+    .route-labels strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .route-labels .to {
+      text-align: right;
+    }
+
+    .route-line {
+      width: 100%;
+      height: 10px;
+      overflow: hidden;
+      margin-top: 9px;
+      border-radius: 999px;
+      background: #efefef;
+      border: 1px solid #f3d1df;
+    }
+
+    .route-fill {
+      width: 0%;
+      height: 100%;
+      min-width: 11px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f2a0c2, #ea5d9a);
+      transition: width 0.35s ease;
+    }
+
+    .mission-board {
+      padding: 18px 14px 14px;
+      margin-bottom: 14px;
+    }
+
+    .mission-board-title {
+      margin: 0 0 14px;
+      color: #6e696c;
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .category-card {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid #f4d9e4;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 7px 17px rgba(221,100,153,0.08);
+    }
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 11px;
+      color: var(--pink);
+      font-size: 16px;
+      font-weight: 950;
+    }
+
+    .category-title::before {
+      content: "";
+      width: 5px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--pink);
+    }
+
+    .mission-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 7px 8px 7px 5px;
+      border: 1px solid #f4e6eb;
+      border-radius: 999px;
+      background: #fff;
+      text-align: left;
+    }
+
+    .mission-row.is-link {
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .mission-row.is-link:active {
+      transform: scale(0.987);
+    }
+
+    .mission-row.done {
+      border-color: #f4abc9;
+      background: #fff4f8;
+    }
+
+    .mission-left {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .mission-dot {
+      width: 25px;
+      height: 25px;
+      flex: 0 0 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #d4d4d6;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .mission-row.done .mission-dot {
+      background: var(--pink);
+    }
+
+    .mission-name {
+      min-width: 0;
+      color: #3e3439;
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .mission-status {
+      min-width: 72px;
+      padding: 7px 9px;
+      border-radius: 999px;
+      color: #8b8b8b;
+      background: #d5d5d7;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .mission-row.done .mission-status {
+      color: #fff;
+      background: var(--pink);
+    }
+
+    .mission-row.is-link:not(.done) .mission-status {
+      color: #fff;
+      background: #df85ac;
+    }
+
+    /* 工作人員 */
+    .staff-entry {
+      padding: 14px;
+      text-align: center;
+    }
+
+    .staff-panel {
+      margin-top: 14px;
+      padding: 20px;
+    }
+
+    .staff-panel .section-title {
+      margin: 0 0 7px;
+      font-size: 21px;
+      font-weight: 950;
+      color: var(--ink);
+    }
+
+    .divider {
+      height: 1px;
+      margin: 20px 0;
+      background: #f0dce5;
+    }
+
+    @media (max-width: 360px) {
+      .app-shell {
+        padding: 14px 10px 36px;
+      }
+
+      .member-progress {
+        font-size: 42px;
+      }
+
+      .mission-name {
+        font-size: 13px;
+      }
+
+      .mission-status {
+        min-width: 66px;
+        padding-inline: 7px;
+      }
     }
   </style>
 </head>
 
 <body>
-  
+  <!-- 首頁封面 -->
   <div id="loginCover" class="login-cover">
     <div class="login-cover-frame">
       <img
@@ -653,14 +623,14 @@
         src="./assets/6月29日(3)-2.gif"
         alt="LOVE BETTER 關係探索旅程"
       >
-  
+
       <button
         class="login-cover-button member"
         type="button"
         onclick="enterMemberJourney()"
         aria-label="會員登入"
       ></button>
-  
+
       <button
         class="login-cover-button staff"
         type="button"
@@ -670,44 +640,34 @@
     </div>
   </div>
 
-<main class="page">
-    <section class="brand-hero">
-      <div class="brand-label">LOVE BETTER JOURNEY</div>
-      <h1 class="brand-title">關係探索旅程</h1>
-      <p class="brand-subtitle">
-        新的相遇，新的自己，新的可能。<br>
-        透過任務累積點數，完成本次旅程資格。
-      </p>
-      
-      <div class="reward-strip">
-        <div>
-          <div class="reward-title">本次會員任務獎勵</div>
-          <div class="reward-main">完成 23 點任務，即可獲得日本機票資格</div>
-        </div>
-        <div class="reward-badge">23 POINTS</div>
-      </div>
-    </section>
-
-    <section id="loading" class="card loading-card">
+  <!-- 系統內容 -->
+  <main class="app-shell">
+    <section id="loading" class="surface loading-card">
       <div class="loader"></div>
-      <div class="title">正在載入</div>
+      <h1 class="title">正在載入</h1>
       <p class="subtitle">系統正在讀取你的 LINE 會員資料。</p>
     </section>
 
-    <section id="registerView" class="card hidden">
-      <div class="title">開啟我的探索旅程</div>
+    <section id="registerView" class="surface register-card hidden">
+      <div class="register-top">
+        <div>
+          <div class="mini-brand">LOVE BETTER JOURNEY</div>
+          <h1 class="title">開啟探索旅程</h1>
+        </div>
+      </div>
+
       <p class="subtitle">
-        完成會員建檔後，即可開始累積任務點數。資料將用於會員身份綁定與點數紀錄。
+        建立會員後即自動獲得「會員建檔註冊」1 點，正式開始累積你的日本旅程。
       </p>
 
       <div class="field">
         <div class="field-label">真實姓名</div>
-        <input id="name" placeholder="請輸入姓名" />
+        <input id="name" placeholder="請輸入姓名">
       </div>
 
       <div class="field">
         <div class="field-label">手機號碼</div>
-        <input id="phone" placeholder="請輸入手機號碼，例如 0912345678" inputmode="tel" />
+        <input id="phone" placeholder="請輸入手機號碼，例如 0912345678" inputmode="tel">
       </div>
 
       <div class="field">
@@ -734,18 +694,23 @@
         </select>
       </div>
 
-      <button class="btn btn-primary" onclick="submitRegister()">開啟我的探索旅程</button>
+      <button class="btn btn-primary" type="button" onclick="submitRegister()">
+        建立會員並獲得 1 點
+      </button>
+
       <div id="registerMsg" class="small"></div>
     </section>
 
     <section id="memberView" class="hidden"></section>
 
-    <section class="card card-flat">
-      <button class="btn btn-light" onclick="openStaffPanel()">工作人員模式</button>
+    <section class="surface staff-entry">
+      <button class="btn btn-soft" type="button" onclick="openStaffPanel()">
+        工作人員模式
+      </button>
       <div id="staffView" class="hidden staff-panel"></div>
     </section>
   </main>
-  
+
   <script>
     const LIFF_ID = "2010212550-s957LSzk";
 
@@ -754,19 +719,38 @@
     let STAFF_DATA = null;
 
     function setLoading(message) {
-      document.getElementById("loading").innerHTML = `
+      const loading = document.getElementById("loading");
+      loading.classList.remove("hidden");
+      loading.innerHTML = `
         <div class="loader"></div>
-        <div class="title">處理中</div>
-        <p class="subtitle">${message}</p>
+        <h1 class="title">處理中</h1>
+        <p class="subtitle">${escapeHtml(message)}</p>
       `;
     }
 
     function showError(message) {
-      document.getElementById("loading").classList.remove("hidden");
-      document.getElementById("loading").innerHTML = `
-        <div class="title">系統錯誤</div>
-        <div class="error">${message}</div>
+      const loading = document.getElementById("loading");
+      loading.classList.remove("hidden");
+      loading.innerHTML = `
+        <h1 class="title">系統錯誤</h1>
+        <div class="error">${escapeHtml(message)}</div>
       `;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJsString(value) {
+      return String(value ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\r?\n/g, "");
     }
 
     function pad2(num) {
@@ -779,45 +763,44 @@
       const daySelect = document.getElementById("birthDay");
 
       if (!yearSelect || yearSelect.dataset.ready === "true") return;
-
       yearSelect.dataset.ready = "true";
 
       const currentYear = new Date().getFullYear();
 
-      for (let y = currentYear; y >= 1950; y--) {
+      for (let year = currentYear; year >= 1950; year--) {
         const option = document.createElement("option");
-        option.value = y;
-        option.textContent = y + "年";
+        option.value = year;
+        option.textContent = year + "年";
         yearSelect.appendChild(option);
       }
 
-      for (let m = 1; m <= 12; m++) {
+      for (let month = 1; month <= 12; month++) {
         const option = document.createElement("option");
-        option.value = pad2(m);
-        option.textContent = m + "月";
+        option.value = pad2(month);
+        option.textContent = month + "月";
         monthSelect.appendChild(option);
       }
 
       function renderDays() {
-        const selectedDay = daySelect.value;
-        daySelect.innerHTML = '<option value="">日期</option>';
+        const previousDay = daySelect.value;
+        const year = Number(yearSelect.value);
+        const month = Number(monthSelect.value);
 
-        const year = parseInt(yearSelect.value, 10);
-        const month = parseInt(monthSelect.value, 10);
+        daySelect.innerHTML = '<option value="">日期</option>';
 
         if (!year || !month) return;
 
-        const lastDay = new Date(year, month, 0).getDate();
+        const totalDays = new Date(year, month, 0).getDate();
 
-        for (let d = 1; d <= lastDay; d++) {
+        for (let day = 1; day <= totalDays; day++) {
           const option = document.createElement("option");
-          option.value = pad2(d);
-          option.textContent = d + "日";
+          option.value = pad2(day);
+          option.textContent = day + "日";
           daySelect.appendChild(option);
         }
 
-        if (selectedDay && Number(selectedDay) <= lastDay) {
-          daySelect.value = selectedDay;
+        if (previousDay && Number(previousDay) <= totalDays) {
+          daySelect.value = previousDay;
         }
       }
 
@@ -832,9 +815,9 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          action,
+          action: action,
           accessToken: ACCESS_TOKEN,
-          payload
+          payload: payload
         })
       });
 
@@ -850,7 +833,6 @@
     async function init() {
       try {
         populateBirthdayOptions();
-
         setLoading("正在初始化 LINE 會員身分...");
 
         await liff.init({ liffId: LIFF_ID });
@@ -868,7 +850,6 @@
         }
 
         setLoading("已取得 LINE 身分，正在讀取會員資料...");
-
         MY_CARD = await api("getMyCard");
 
         document.getElementById("loading").classList.add("hidden");
@@ -880,13 +861,13 @@
 
         renderMemberCard(MY_CARD);
       } catch (error) {
-        showError(error.message || error);
+        showError(error && error.message ? error.message : error);
       }
     }
 
     async function submitRegister() {
       const msg = document.getElementById("registerMsg");
-      msg.innerHTML = "送出中...";
+      msg.textContent = "送出中...";
 
       const year = document.getElementById("birthYear").value;
       const month = document.getElementById("birthMonth").value;
@@ -909,82 +890,126 @@
         document.getElementById("registerView").classList.add("hidden");
         renderMemberCard(MY_CARD);
       } catch (error) {
-        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
+    }
+
+    function getGenderSymbol(gender) {
+      return gender === "女" ? "♀" : "♂";
+    }
+
+    function getMissionStatus(task) {
+      if (task.completed) return "已完成";
+      if (task.taskUrl) return task.buttonText || "前往解鎖";
+      return "未完成";
     }
 
     function renderMemberCard(data) {
       const view = document.getElementById("memberView");
       view.classList.remove("hidden");
 
-      const percent = data.totalPoints > 0
-        ? Math.min(100, Math.round((data.completedPoints / data.totalPoints) * 100))
-        : 0;
+      const total = Number(data.totalPoints || 25);
+      const completed = Number(data.completedPoints || 0);
+      const remaining = Math.max(total - completed, 0);
+      const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
       const grouped = {};
-      data.tasks.forEach(task => {
+      data.tasks.forEach(function(task) {
         if (!grouped[task.category]) grouped[task.category] = [];
         grouped[task.category].push(task);
       });
 
       let taskHtml = "";
 
-      Object.keys(grouped).forEach(category => {
-        taskHtml += `<div class="task-category">${category}</div>`;
+      Object.keys(grouped).forEach(function(category) {
+        taskHtml += `
+          <section class="category-card">
+            <h3 class="category-title">${escapeHtml(category)}</h3>
+        `;
 
-        grouped[category].forEach(task => {
+        grouped[category].forEach(function(task) {
+          const doneClass = task.completed ? "done" : "";
+          const linkClass = task.taskUrl && !task.completed ? "is-link" : "";
+          const onClick = task.taskUrl && !task.completed
+            ? `onclick="openTaskUrl('${escapeJsString(task.taskUrl)}')"`
+            : "";
+
           taskHtml += `
-            <div class="task ${task.completed ? "done" : ""}">
-              <div class="task-left">
-                <div class="task-icon">${task.completed ? "✓" : "•"}</div>
-                <div class="task-name">${task.taskName}</div>
-              </div>
-              <div class="badge">${task.completed ? "已完成" : "+ " + task.points}</div>
-            </div>
+            <button
+              class="mission-row ${doneClass} ${linkClass}"
+              type="button"
+              ${onClick}
+              ${task.taskUrl && !task.completed ? "" : "disabled"}
+            >
+              <span class="mission-left">
+                <span class="mission-dot">${task.completed ? "✓" : ""}</span>
+                <span class="mission-name">${escapeHtml(task.taskName)}</span>
+              </span>
+              <span class="mission-status">${escapeHtml(getMissionStatus(task))}</span>
+            </button>
           `;
         });
+
+        taskHtml += `</section>`;
       });
 
       view.innerHTML = `
-        <div class="card member-card">
-          <div class="member-top">
+        <section class="surface member-card">
+          <div class="member-brand-row">
+            <div class="member-brand">
+              <span class="member-brand-icon">♡</span>
+              <span>LOVE BETTER<br>戀愛好多</span>
+            </div>
+            <span class="gender-mark">${getGenderSymbol(data.member.gender)}</span>
+          </div>
+
+          <div class="member-greeting">LINE好友會員</div>
+
+          <div class="member-progress">
+            ${completed}<span>/${total}</span>
+          </div>
+
+          <div class="progress-note">
+            探索體驗還差 ${remaining} 點，即可獲得日本來回機票
+          </div>
+
+          <div class="route-labels">
             <div>
-              <div class="member-label">LOVE BETTER MEMBER</div>
-              <div class="member-name">${data.member.name}</div>
+              TAIWAN
+              <strong>台灣</strong>
             </div>
-            <div class="member-pill">${data.member.gender || "會員"}</div>
-          </div>
-
-          <div class="progress-row">
-            <div class="progress-number">${data.completedPoints} / ${data.totalPoints}</div>
-            <div class="progress-copy">
-              還差 ${data.remainingPoints} 點<br>
-              完成本次日本機票資格
+            <div class="to">
+              JAPAN
+              <strong>日本</strong>
             </div>
           </div>
 
-          <div class="bar">
-            <div class="bar-inner" style="width:${percent}%"></div>
+          <div class="route-line">
+            <div class="route-fill" style="width:${percent}%"></div>
           </div>
+        </section>
 
-          <div class="member-meta">
-            <div class="meta-item">
-              <div class="meta-label">會員編號</div>
-              <div class="meta-value">${data.member.memberId}</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-label">LINE 名稱</div>
-              <div class="meta-value">${data.profile.lineName || "—"}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-title">任務完成狀態</div>
-          <p class="subtitle">完成任務後，將由工作人員審核或發放點數。</p>
+        <section class="surface mission-board">
+          <h2 class="mission-board-title">任務完成狀態</h2>
           ${taskHtml}
-        </div>
+        </section>
       `;
+    }
+
+    function openTaskUrl(url) {
+      if (!url) return;
+
+      try {
+        if (window.liff && liff.isInClient()) {
+          liff.openWindow({
+            url: url,
+            external: true
+          });
+          return;
+        }
+      } catch (error) {}
+
+      window.open(url, "_blank", "noopener");
     }
 
     async function openStaffPanel() {
@@ -993,23 +1018,27 @@
       staffView.innerHTML = '<div class="small">工作人員資料讀取中...</div>';
 
       try {
+        if (!ACCESS_TOKEN) {
+          throw new Error("系統尚未完成 LINE 身分初始化，請稍候後再按一次");
+        }
+
         STAFF_DATA = await api("getStaffPanelData");
         renderStaffPanel();
       } catch (error) {
-        staffView.innerHTML = `<div class="error">${error.message || error}</div>`;
+        staffView.innerHTML = `<div class="error">${escapeHtml(error && error.message ? error.message : error)}</div>`;
       }
     }
 
     function renderStaffPanel() {
       const staffView = document.getElementById("staffView");
 
-      const taskOptions = STAFF_DATA.tasks.map(task => {
-        return `<option value="${task.taskId}">${task.gender}｜${task.category}｜${task.taskName}</option>`;
+      const taskOptions = STAFF_DATA.tasks.map(function(task) {
+        return `<option value="${escapeHtml(task.taskId)}">${escapeHtml(task.gender)}｜${escapeHtml(task.category)}｜${escapeHtml(task.taskName)}</option>`;
       }).join("");
 
       staffView.innerHTML = `
-        <div class="section-title">工作人員發放任務</div>
-        <p class="subtitle">輸入會員手機號碼，選擇完成任務後即可發放點數。</p>
+        <h2 class="section-title">工作人員發放任務</h2>
+        <p class="subtitle">輸入會員手機號碼，選擇完成任務即可發放點數與 LINE 圖卡通知。</p>
 
         <div class="field">
           <div class="field-label">會員手機號碼</div>
@@ -1023,15 +1052,15 @@
 
         <div class="field">
           <div class="field-label">備註</div>
-          <textarea id="singleNote" placeholder="例如：6/22 精選活動完成"></textarea>
+          <textarea id="singleNote" placeholder="例如：活動完成、預約完成"></textarea>
         </div>
 
-        <button class="btn btn-secondary" onclick="grantSingle()">確認發放點數</button>
+        <button class="btn btn-dark" type="button" onclick="grantSingle()">確認發放點數</button>
         <div id="singleMsg" class="small"></div>
 
         <div class="divider"></div>
 
-        <div class="section-title">集體發放</div>
+        <h2 class="section-title">集體發放</h2>
 
         <div class="field">
           <div class="field-label">發放模式</div>
@@ -1052,7 +1081,7 @@
 
         <div class="field">
           <div class="field-label">會員 ID 批量輸入</div>
-          <textarea id="bulkMemberIds" placeholder="若選擇會員 ID 批量發放，請輸入 LOVE0001、LOVE0002，可換行"></textarea>
+          <textarea id="bulkMemberIds" placeholder="例如 LOVE0001、LOVE0002，可用逗號或換行分隔"></textarea>
         </div>
 
         <div class="field">
@@ -1062,17 +1091,17 @@
 
         <div class="field">
           <div class="field-label">備註</div>
-          <textarea id="bulkNote" placeholder="例如：6/22 活動集體完成"></textarea>
+          <textarea id="bulkNote" placeholder="例如：年度活動集體完成"></textarea>
         </div>
 
-        <button class="btn btn-secondary" onclick="grantBulk()">集體發放點數</button>
+        <button class="btn btn-dark" type="button" onclick="grantBulk()">集體發放點數</button>
         <div id="bulkMsg" class="small"></div>
       `;
     }
 
     async function grantSingle() {
       const msg = document.getElementById("singleMsg");
-      msg.innerHTML = "發放中...";
+      msg.textContent = "發放中...";
 
       try {
         const result = await api("grantTaskToMember", {
@@ -1081,15 +1110,15 @@
           note: document.getElementById("singleNote").value.trim()
         });
 
-        msg.innerHTML = `<span class="success">${result.message}</span>`;
+        msg.innerHTML = `<span class="success">${escapeHtml(result.message)}</span>`;
       } catch (error) {
-        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
     }
 
     async function grantBulk() {
       const msg = document.getElementById("bulkMsg");
-      msg.innerHTML = "集體發放中...";
+      msg.textContent = "集體發放中...";
 
       try {
         const result = await api("bulkGrantTask", {
@@ -1103,42 +1132,39 @@
         msg.innerHTML = `
           <span class="success">
             發放完成<br>
-            新增：${result.addedCount} 筆<br>
-            已完成略過：${result.skippedCount} 筆
+            新增點數：${result.addedCount} 筆<br>
+            已完成略過：${result.skippedCount} 筆<br>
+            LINE 圖卡已送出：${result.pushSuccessCount} 筆<br>
+            LINE 圖卡失敗：${result.pushFailCount} 筆
           </span>
         `;
       } catch (error) {
-        msg.innerHTML = `<span class="error">${error.message || error}</span>`;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
     }
 
     function closeLoginCover() {
-  const cover = document.getElementById("loginCover");
-
-  if (cover) {
-    cover.classList.add("is-hidden");
-  }
-}
-
-function enterMemberJourney() {
-  closeLoginCover();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-function enterStaffJourney() {
-  closeLoginCover();
-
-  setTimeout(function() {
-    if (typeof openStaffPanel === "function") {
-      openStaffPanel();
+      const cover = document.getElementById("loginCover");
+      if (cover) cover.classList.add("is-hidden");
     }
-  }, 200);
-}
-    
+
+    function enterMemberJourney() {
+      closeLoginCover();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function enterStaffJourney() {
+      closeLoginCover();
+
+      const startedAt = Date.now();
+      const timer = setInterval(function() {
+        if (ACCESS_TOKEN || Date.now() - startedAt > 6000) {
+          clearInterval(timer);
+          openStaffPanel();
+        }
+      }, 120);
+    }
+
     init();
   </script>
 </body>
