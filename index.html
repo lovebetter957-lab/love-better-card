@@ -74,6 +74,7 @@
 
     .login-cover-frame {
       position: relative;
+      isolation: isolate;
       width: min(100%, 460px);
       min-height: 100dvh;
       margin: 0 auto;
@@ -83,28 +84,99 @@
       display: block;
       width: 100%;
       height: auto;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
+    /* 覆蓋 GIF 裡舊 LOGO 的新版橫式 LOGO */
+    .login-cover-logo-wrap {
+      position: absolute;
+      z-index: 8;
+      top: 3.5%;
+      left: 4.8%;
+      width: 31%;
+      padding: 7px 9px;
+      border-radius: 12px;
+      background: rgba(239, 123, 169, 0.18);
+      backdrop-filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .login-cover-logo {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.96;
+    }
+
+    /* 按鈕範圍刻意放大，手機不用精準點在字上 */
     .login-cover-button {
       position: absolute;
-      top: 75.6%;
-      width: 42%;
-      height: 5.2%;
+      z-index: 20;
+      top: 75%;
+      width: 46%;
+      height: 8.5%;
       margin: 0;
       padding: 0;
       border: 0;
       border-radius: 999px;
       background: transparent;
       cursor: pointer;
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .login-cover-button.member {
-      left: 3.8%;
+      left: 1.7%;
     }
 
     .login-cover-button.staff {
-      right: 3.8%;
+      right: 1.7%;
+    }
+
+    .login-cover.is-entering .login-cover-button {
+      pointer-events: none;
+    }
+
+    .login-cover-loading {
+      position: absolute;
+      z-index: 30;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(245, 154, 188, 0.16);
+      backdrop-filter: blur(1px);
+      pointer-events: all;
+    }
+
+    .login-cover.is-entering .login-cover-loading {
+      display: grid;
+    }
+
+    .login-cover-loading-box {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      padding: 18px 22px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      border-radius: 18px;
+      background: rgba(91, 42, 63, 0.55);
+      box-shadow: 0 12px 32px rgba(80, 33, 52, 0.24);
+    }
+
+    .login-cover-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.36);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
     }
 
     .login-cover-button:focus-visible {
@@ -347,22 +419,14 @@
     .member-brand {
       display: flex;
       align-items: center;
-      gap: 8px;
-      color: #b34c7a;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.4px;
+      min-height: 28px;
     }
 
-    .member-brand-icon {
-      width: 25px;
-      height: 25px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      color: #fff;
-      background: linear-gradient(135deg, #f49ac0, #df5d9a);
-      font-size: 14px;
+    .member-brand-logo {
+      display: block;
+      width: 126px;
+      height: auto;
+      opacity: 0.76;
     }
 
     .gender-mark {
@@ -624,6 +688,14 @@
         alt="LOVE BETTER 關係探索旅程"
       >
 
+      <div class="login-cover-logo-wrap" aria-hidden="true">
+        <img
+          class="login-cover-logo"
+          src="./assets/lovebetter-logo-horizontal.png"
+          alt=""
+        >
+      </div>
+
       <button
         class="login-cover-button member"
         type="button"
@@ -637,6 +709,13 @@
         onclick="enterStaffJourney()"
         aria-label="工作人員登入"
       ></button>
+
+      <div class="login-cover-loading" aria-live="polite">
+        <div class="login-cover-loading-box">
+          <div class="login-cover-spinner"></div>
+          <div id="loginCoverLoadingText">正在開啟你的探索旅程…</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -904,6 +983,35 @@
       return "未完成";
     }
 
+    function getDisplayMemberName(data) {
+      const profile = data && data.profile ? data.profile : {};
+      const member = data && data.member ? data.member : {};
+
+      const candidates = [
+        profile.lineName,
+        profile.displayName,
+        member.lineName,
+        member.name
+      ];
+
+      for (let i = 0; i < candidates.length; i++) {
+        const value = String(candidates[i] || "").trim();
+        if (value) return value;
+      }
+
+      return "LINE好友會員";
+    }
+
+    function getProgressNote(remaining) {
+      const points = Math.max(Number(remaining || 0), 0);
+
+      if (points <= 0) {
+        return "恭喜你已完成探索體驗，已取得日本來回機票資格";
+      }
+
+      return "探索體驗還差 " + points + " 點，即可獲得日本來回機票";
+    }
+
     function renderMemberCard(data) {
       const view = document.getElementById("memberView");
       view.classList.remove("hidden");
@@ -957,20 +1065,23 @@
         <section class="surface member-card">
           <div class="member-brand-row">
             <div class="member-brand">
-              <span class="member-brand-icon">♡</span>
-              <span>LOVE BETTER<br>戀愛好多</span>
+              <img
+                class="member-brand-logo"
+                src="./assets/lovebetter-logo-horizontal.png"
+                alt="Love Better 戀愛好多"
+              >
             </div>
             <span class="gender-mark">${getGenderSymbol(data.member.gender)}</span>
           </div>
 
-          <div class="member-greeting">LINE好友會員</div>
+          <div class="member-greeting">${escapeHtml(getDisplayMemberName(data))}</div>
 
           <div class="member-progress">
             ${completed}<span>/${total}</span>
           </div>
 
           <div class="progress-note">
-            探索體驗還差 ${remaining} 點，即可獲得日本來回機票
+            ${escapeHtml(getProgressNote(remaining))}
           </div>
 
           <div class="route-labels">
@@ -1143,26 +1254,58 @@
       }
     }
 
+    let COVER_ENTERING = false;
+
+    function setLoginCoverLoadingText(text) {
+      const target = document.getElementById("loginCoverLoadingText");
+      if (target) target.textContent = text;
+    }
+
     function closeLoginCover() {
       const cover = document.getElementById("loginCover");
-      if (cover) cover.classList.add("is-hidden");
+
+      if (cover) {
+        cover.classList.add("is-hidden");
+      }
+    }
+
+    function beginCoverEntry(text) {
+      if (COVER_ENTERING) return false;
+
+      COVER_ENTERING = true;
+
+      const cover = document.getElementById("loginCover");
+      if (cover) {
+        cover.classList.add("is-entering");
+      }
+
+      setLoginCoverLoadingText(text);
+      return true;
     }
 
     function enterMemberJourney() {
-      closeLoginCover();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!beginCoverEntry("正在開啟你的探索旅程…")) return;
+
+      setTimeout(function() {
+        closeLoginCover();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 180);
     }
 
     function enterStaffJourney() {
-      closeLoginCover();
+      if (!beginCoverEntry("正在確認工作人員身分…")) return;
 
-      const startedAt = Date.now();
-      const timer = setInterval(function() {
-        if (ACCESS_TOKEN || Date.now() - startedAt > 6000) {
-          clearInterval(timer);
-          openStaffPanel();
-        }
-      }, 120);
+      setTimeout(function() {
+        closeLoginCover();
+
+        const startedAt = Date.now();
+        const timer = setInterval(function() {
+          if (ACCESS_TOKEN || Date.now() - startedAt > 6000) {
+            clearInterval(timer);
+            openStaffPanel();
+          }
+        }, 120);
+      }, 180);
     }
 
     init();
