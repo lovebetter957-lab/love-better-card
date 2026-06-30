@@ -3,12 +3,6 @@ import { ImageResponse } from '@vercel/og';
 
 const h = React.createElement;
 
-const APP_URL = 'https://love-better-card.vercel.app';
-const BACKGROUND_URL =
-  APP_URL + '/assets/point-card-bg.png';
-
-const FONT_CACHE = new Map();
-
 function clean(value, fallback = '') {
   const result = String(value || '')
     .replace(/\s+/g, ' ')
@@ -27,121 +21,59 @@ function getNumber(value, fallback, min, max) {
   return Math.min(Math.max(number, min), max);
 }
 
-function getUrl(request) {
-  const rawUrl =
-    request && typeof request.url === 'string'
-      ? request.url
-      : '';
+function getRequestUrl(req) {
+  const rawUrl = String((req && req.url) || '');
 
   if (rawUrl.startsWith('http')) {
     return new URL(rawUrl);
   }
 
+  const headers = (req && req.headers) || {};
+
   const host =
-    request &&
-    request.headers &&
-    request.headers.host
-      ? request.headers.host
-      : 'love-better-card.vercel.app';
+    headers['x-forwarded-host'] ||
+    headers.host ||
+    'love-better-card.vercel.app';
+
+  const protocol =
+    headers['x-forwarded-proto'] ||
+    'https';
 
   return new URL(
     rawUrl || '/api/point-card',
-    'https://' + host
+    protocol + '://' + host
   );
 }
 
-async function loadFont(text, weight) {
-  const cacheKey = weight + ':' + text;
-
-  if (FONT_CACHE.has(cacheKey)) {
-    return FONT_CACHE.get(cacheKey);
-  }
-
-  const promise = (async function () {
-    const cssUrl =
-      'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@' +
-      weight +
-      '&text=' +
-      encodeURIComponent(text);
-
-    const cssResponse = await fetch(cssUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0'
-      }
-    });
-
-    if (!cssResponse.ok) {
-      throw new Error('中文字型載入失敗');
-    }
-
-    const css = await cssResponse.text();
-
-    const matched = css.match(/url\(([^)]+)\)/);
-
-    if (!matched) {
-      throw new Error('找不到中文字型來源');
-    }
-
-    const fontUrl = matched[1]
-      .replace(/['"]/g, '')
-      .trim();
-
-    const fontResponse = await fetch(fontUrl);
-
-    if (!fontResponse.ok) {
-      throw new Error('中文字型下載失敗');
-    }
-
-    return fontResponse.arrayBuffer();
-  })();
-
-  FONT_CACHE.set(cacheKey, promise);
-
-  return promise;
-}
-
-function overlay({
-  left,
-  top,
-  width,
-  height,
-  text,
-  color = '#ef4398',
-  fontSize = 24,
-  fontWeight = 400,
-  justifyContent = 'flex-start',
-  alignItems = 'flex-start',
-  textAlign = 'left',
-  lineHeight = 1.2
-}) {
+function textBox(options) {
   return h(
     'div',
     {
       style: {
         position: 'absolute',
-        left: left + 'px',
-        top: top + 'px',
-        width: width + 'px',
-        height: height + 'px',
+        left: options.left + 'px',
+        top: options.top + 'px',
+        width: options.width + 'px',
+        height: options.height + 'px',
         display: 'flex',
         overflow: 'hidden',
-        color: color,
-        fontSize: fontSize + 'px',
-        fontWeight: fontWeight,
-        justifyContent: justifyContent,
-        alignItems: alignItems,
-        textAlign: textAlign,
-        lineHeight: lineHeight
+        color: options.color || '#ef4398',
+        fontSize: options.fontSize + 'px',
+        fontWeight: options.fontWeight || 400,
+        lineHeight: options.lineHeight || 1.2,
+        justifyContent: options.justifyContent || 'flex-start',
+        alignItems: options.alignItems || 'flex-start',
+        textAlign: options.textAlign || 'left',
+        fontFamily: 'sans-serif'
       }
     },
-    text
+    options.text
   );
 }
 
-export default async function handler(request) {
+export default async function handler(req) {
   try {
-    const url = getUrl(request);
+    const url = getRequestUrl(req);
 
     const name = clean(
       url.searchParams.get('name'),
@@ -181,6 +113,9 @@ export default async function handler(request) {
       total
     );
 
+    const backgroundUrl =
+      url.origin + '/assets/point-card-bg.png';
+
     const remainingText =
       remain <= 0
         ? '探索旅程已完成，已取得日本來回機票資格'
@@ -188,36 +123,11 @@ export default async function handler(request) {
           remain +
           ' 點，即可獲得日本來回機票';
 
-    const allText = [
-      '探索完成通知',
-      '你已完成',
-      '本次獲得點數',
-      '目前探索旅程進度',
-      '點',
-      '查看我的集點卡',
-      '探索體驗還差',
-      '即可獲得日本來回機票',
-      '探索旅程已完成，已取得日本來回機票資格',
-      name,
-      task,
-      '+' + gain,
-      done + '/' + total,
-      remain
-    ].join('');
-
-    const fonts = await Promise.all([
-      loadFont(allText, 400),
-      loadFont(allText, 700)
-    ]);
-
-    const regularFont = fonts[0];
-    const boldFont = fonts[1];
-
     const taskFontSize =
       task.length > 16
-        ? 27
+        ? 28
         : task.length > 11
-          ? 33
+          ? 34
           : 42;
 
     const nameFontSize =
@@ -251,7 +161,8 @@ export default async function handler(request) {
             color: '#ef4398',
             fontSize: '65px',
             fontWeight: 700,
-            lineHeight: 0.9
+            lineHeight: 0.9,
+            fontFamily: 'sans-serif'
           }
         },
         '+' + gain
@@ -264,7 +175,8 @@ export default async function handler(request) {
             color: '#ef4398',
             fontSize: '25px',
             fontWeight: 700,
-            marginTop: '7px'
+            marginTop: '7px',
+            fontFamily: 'sans-serif'
           }
         },
         '點'
@@ -288,7 +200,8 @@ export default async function handler(request) {
           backgroundColor: '#f8c7da',
           color: '#ef4398',
           fontSize: '43px',
-          fontWeight: 700
+          fontWeight: 700,
+          fontFamily: 'sans-serif'
         }
       },
       done + '/' + total
@@ -310,7 +223,8 @@ export default async function handler(request) {
           backgroundColor: '#ffffff',
           color: '#55545a',
           fontSize: '34px',
-          fontWeight: 700
+          fontWeight: 700,
+          fontFamily: 'sans-serif'
         }
       },
       '查看我的集點卡'
@@ -326,11 +240,12 @@ export default async function handler(request) {
           display: 'flex',
           overflow: 'hidden',
           backgroundColor: '#f5abc6',
-          fontFamily: 'Noto Sans TC'
+          fontFamily: 'sans-serif'
         }
       },
+
       h('img', {
-        src: BACKGROUND_URL,
+        src: backgroundUrl,
         width: '640',
         height: '640',
         style: {
@@ -342,7 +257,7 @@ export default async function handler(request) {
         }
       }),
 
-      overlay({
+      textBox({
         left: 42,
         top: 93,
         width: 556,
@@ -353,7 +268,7 @@ export default async function handler(request) {
         fontWeight: 700
       }),
 
-      overlay({
+      textBox({
         left: 42,
         top: 169,
         width: 556,
@@ -363,7 +278,7 @@ export default async function handler(request) {
         fontSize: nameFontSize
       }),
 
-      overlay({
+      textBox({
         left: 42,
         top: 211,
         width: 556,
@@ -375,7 +290,7 @@ export default async function handler(request) {
         lineHeight: 1.12
       }),
 
-      overlay({
+      textBox({
         left: 65,
         top: 288,
         width: 205,
@@ -388,7 +303,7 @@ export default async function handler(request) {
         textAlign: 'center'
       }),
 
-      overlay({
+      textBox({
         left: 365,
         top: 288,
         width: 220,
@@ -404,7 +319,7 @@ export default async function handler(request) {
       pointCircle,
       progressCircle,
 
-      overlay({
+      textBox({
         left: 42,
         top: 500,
         width: 556,
@@ -423,22 +338,8 @@ export default async function handler(request) {
     return new ImageResponse(card, {
       width: 640,
       height: 640,
-      fonts: [
-        {
-          name: 'Noto Sans TC',
-          data: regularFont,
-          weight: 400,
-          style: 'normal'
-        },
-        {
-          name: 'Noto Sans TC',
-          data: boldFont,
-          weight: 700,
-          style: 'normal'
-        }
-      ],
       headers: {
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=300'
       }
     });
 
