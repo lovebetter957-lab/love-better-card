@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LOVE BETTER 會員集點卡</title>
-
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
@@ -28,12 +27,7 @@
     }
 
     html {
-      min-height: 100%;
-      background-color: #f6a6c4;
-      background-image: url("./assets/集點卡背景.png");
-      background-repeat: repeat-y;
-      background-position: center top;
-      background-size: 480px auto;
+      background: #f6a5c5;
     }
 
     body {
@@ -41,7 +35,10 @@
       min-height: 100vh;
       color: var(--ink);
       font-family: Arial, "Noto Sans TC", "PingFang TC", sans-serif;
-      background: transparent;
+      background:
+        radial-gradient(circle at 16% 6%, rgba(255,255,255,0.38), transparent 22%),
+        radial-gradient(circle at 94% 20%, rgba(255,255,255,0.24), transparent 26%),
+        linear-gradient(180deg, #f7bfd4 0%, #ef83b2 52%, #f5a5c4 100%);
     }
 
     button,
@@ -59,10 +56,9 @@
       display: none !important;
     }
 
-    /* =========================
-       首頁 GIF 封面
-    ========================= */
-
+    /* =====================================================
+       首頁封面：使用 GitHub assets/6月29日(3)-2.gif
+    ===================================================== */
     .login-cover {
       position: fixed;
       inset: 0;
@@ -93,6 +89,7 @@
       -webkit-user-drag: none;
     }
 
+    /* 覆蓋 GIF 裡舊 LOGO 的新版橫式 LOGO */
     .login-cover-logo-wrap {
       position: absolute;
       z-index: 8;
@@ -114,6 +111,7 @@
       opacity: 0.96;
     }
 
+    /* 按鈕範圍刻意放大，手機不用精準點在字上 */
     .login-cover-button {
       position: absolute;
       z-index: 20;
@@ -125,7 +123,9 @@
       border: 0;
       border-radius: 999px;
       background: transparent;
+      cursor: pointer;
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       -webkit-user-select: none;
       user-select: none;
     }
@@ -170,11 +170,10 @@
       box-shadow: 0 12px 32px rgba(80, 33, 52, 0.24);
     }
 
-    .login-cover-spinner,
-    .loader {
-      width: 30px;
-      height: 30px;
-      border: 4px solid rgba(255, 255, 255, 0.35);
+    .login-cover-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.36);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.75s linear infinite;
@@ -185,29 +184,52 @@
       outline-offset: 4px;
     }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* =========================
-       全站內容
-    ========================= */
-
+    /* =====================================================
+       網站內容
+    ===================================================== */
     .app-shell {
       width: min(100%, 480px);
       min-height: 100vh;
       margin: 0 auto;
       padding: 18px 14px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-shell::before,
+    .app-shell::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      opacity: 0.28;
+      pointer-events: none;
+    }
+
+    .app-shell::before {
+      width: 360px;
+      height: 360px;
+      top: -140px;
+      right: -150px;
+      border: 42px solid rgba(255,255,255,0.34);
+      border-radius: 52% 48% 46% 54%;
+      transform: rotate(24deg);
+    }
+
+    .app-shell::after {
+      width: 390px;
+      height: 190px;
+      bottom: -70px;
+      left: -90px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.17);
+      transform: rotate(-12deg);
     }
 
     .surface {
-      border: 1px solid rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.96);
       border-radius: 28px;
-      background: rgba(255, 255, 255, 0.94);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(1px);
     }
 
     .loading-card,
@@ -218,17 +240,25 @@
     }
 
     .loader {
-      margin-bottom: 14px;
-      border-color: #f8c8da;
+      width: 34px;
+      height: 34px;
+      border: 4px solid #f8c8da;
       border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.72s linear infinite;
+      margin-bottom: 14px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .title {
       margin: 0 0 8px;
-      color: var(--ink);
       font-size: 23px;
-      font-weight: 950;
       line-height: 1.25;
+      font-weight: 950;
+      color: var(--ink);
     }
 
     .subtitle {
@@ -240,7 +270,7 @@
 
     .error {
       color: var(--danger);
-      font-weight: 850;
+      font-weight: 800;
       line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
@@ -254,10 +284,7 @@
       word-break: break-word;
     }
 
-    /* =========================
-       註冊
-    ========================= */
-
+    /* 註冊 */
     .register-top {
       display: flex;
       align-items: center;
@@ -288,12 +315,12 @@
     select,
     textarea {
       width: 100%;
-      padding: 14px;
       border: 1px solid #ebd5df;
       border-radius: 16px;
       outline: none;
-      color: var(--ink);
       background: #fff;
+      color: var(--ink);
+      padding: 14px;
       transition: 0.18s ease;
     }
 
@@ -301,7 +328,7 @@
     select:focus,
     textarea:focus {
       border-color: #ed76aa;
-      box-shadow: 0 0 0 4px rgba(237, 94, 157, 0.14);
+      box-shadow: 0 0 0 4px rgba(237,94,157,0.14);
     }
 
     textarea {
@@ -333,7 +360,7 @@
     .btn-primary {
       color: #fff;
       background: linear-gradient(135deg, #f066a4, #d84689);
-      box-shadow: 0 10px 20px rgba(214, 70, 136, 0.26);
+      box-shadow: 0 10px 20px rgba(214,70,136,0.26);
     }
 
     .btn-soft {
@@ -356,10 +383,9 @@
       word-break: break-word;
     }
 
-    /* =========================
-       會員卡
-    ========================= */
-
+    /* =====================================================
+       會員集點卡頁
+    ===================================================== */
     .member-card {
       overflow: hidden;
       margin-bottom: 14px;
@@ -367,11 +393,33 @@
       position: relative;
     }
 
+    .member-card::before {
+      content: "";
+      position: absolute;
+      width: 270px;
+      height: 270px;
+      top: -136px;
+      right: -124px;
+      border-radius: 50%;
+      background: rgba(246, 163, 195, 0.17);
+    }
+
+    .member-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
     .member-brand-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    .member-brand {
+      display: flex;
+      align-items: center;
+      min-height: 28px;
     }
 
     .member-brand-logo {
@@ -389,8 +437,8 @@
       border: 1.5px solid #a0a0a0;
       border-radius: 50%;
       color: #8d8d8d;
-      font-size: 16px;
       font-weight: 900;
+      font-size: 16px;
     }
 
     .member-greeting {
@@ -448,15 +496,15 @@
       height: 10px;
       overflow: hidden;
       margin-top: 9px;
-      border: 1px solid #f3d1df;
       border-radius: 999px;
       background: #efefef;
+      border: 1px solid #f3d1df;
     }
 
     .route-fill {
       width: 0%;
-      min-width: 11px;
       height: 100%;
+      min-width: 11px;
       border-radius: 999px;
       background: linear-gradient(90deg, #f2a0c2, #ea5d9a);
       transition: width 0.35s ease;
@@ -479,8 +527,8 @@
       padding: 14px;
       border: 1px solid #f4d9e4;
       border-radius: 22px;
-      background: rgba(255, 255, 255, 0.97);
-      box-shadow: 0 7px 17px rgba(221, 100, 153, 0.08);
+      background: #fff;
+      box-shadow: 0 7px 17px rgba(221,100,153,0.08);
     }
 
     .category-title {
@@ -517,6 +565,7 @@
 
     .mission-row.is-link {
       cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .mission-row.is-link:active {
@@ -543,8 +592,8 @@
       display: grid;
       place-items: center;
       border-radius: 50%;
-      color: #fff;
       background: #d4d4d6;
+      color: #fff;
       font-size: 13px;
       font-weight: 950;
     }
@@ -584,14 +633,138 @@
       background: #df85ac;
     }
 
-    /* =========================
-       工作人員
-    ========================= */
 
+
+    /* =====================================================
+       活動須知同意頁
+    ===================================================== */
+    .agreement-card {
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .agreement-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 14px;
+    }
+
+    .agreement-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: #8d3e64;
+      background: #fff2f7;
+      border: 1px solid #f3c2d6;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .agreement-scroll {
+      max-height: 46vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px;
+      border: 1px solid #f1d4df;
+      border-radius: 18px;
+      background: #fffafd;
+      color: #4f4148;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .agreement-scroll h3 {
+      margin: 16px 0 7px;
+      color: var(--pink-dark);
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .agreement-scroll h3:first-child {
+      margin-top: 0;
+    }
+
+    .agreement-scroll ul,
+    .agreement-scroll ol {
+      margin: 6px 0 10px;
+      padding-left: 20px;
+    }
+
+    .agreement-scroll li {
+      margin: 4px 0;
+    }
+
+    .agreement-check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 16px;
+      padding: 13px;
+      border-radius: 16px;
+      background: #fff2f7;
+      border: 1px solid #f3c2d6;
+      color: #604b55;
+      font-size: 13px;
+      line-height: 1.6;
+      font-weight: 850;
+    }
+
+    .agreement-check input {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      margin-top: 2px;
+      accent-color: var(--pink);
+    }
+
+    .signature-box {
+      margin-top: 15px;
+    }
+
+    .signature-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .signature-title {
+      color: #6d5961;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .signature-clear {
+      width: auto;
+      min-height: 34px;
+      margin: 0;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: #8d3e64;
+      background: #fff2f7;
+      border: 1px solid #f3c2d6;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .signature-canvas {
+      display: block;
+      width: 100%;
+      height: 180px;
+      border: 1.5px dashed #ec9bbd;
+      border-radius: 18px;
+      background: #fff;
+      touch-action: none;
+    }
+
+    /* 工作人員 */
     .staff-entry {
       padding: 14px;
       text-align: center;
-      background: rgba(255, 255, 255, 0.93);
     }
 
     .staff-panel {
@@ -599,55 +772,17 @@
       padding: 20px;
     }
 
-    .section-title {
+    .staff-panel .section-title {
       margin: 0 0 7px;
-      color: var(--ink);
       font-size: 21px;
       font-weight: 950;
+      color: var(--ink);
     }
 
     .divider {
       height: 1px;
       margin: 20px 0;
       background: #f0dce5;
-    }
-
-    .staff-member-summary {
-      margin-top: 12px;
-      padding: 12px 13px;
-      border: 1px solid #f1c9da;
-      border-radius: 16px;
-      color: #6d5961;
-      background: #fff7fa;
-      font-size: 13px;
-      font-weight: 800;
-      line-height: 1.7;
-      text-align: left;
-    }
-
-    .staff-member-summary strong {
-      color: var(--pink-dark);
-    }
-
-    .staff-task-select:disabled {
-      color: #a8a0a4;
-      background: #f5f1f3;
-      cursor: not-allowed;
-    }
-
-    .staff-hint {
-      margin-top: 9px;
-      color: #8b737c;
-      font-size: 12px;
-      font-weight: 750;
-      line-height: 1.65;
-      text-align: left;
-    }
-
-    @media (max-width: 480px) {
-      html {
-        background-size: 100% auto;
-      }
     }
 
     @media (max-width: 360px) {
@@ -672,6 +807,7 @@
 </head>
 
 <body>
+  <!-- 首頁封面 -->
   <div id="loginCover" class="login-cover">
     <div class="login-cover-frame">
       <img
@@ -711,6 +847,7 @@
     </div>
   </div>
 
+  <!-- 系統內容 -->
   <main class="app-shell">
     <section id="loading" class="surface loading-card">
       <div class="loader"></div>
@@ -742,16 +879,13 @@
 
       <div class="field">
         <div class="field-label">出生年月日</div>
-
         <div class="birthday-grid">
           <select id="birthYear">
             <option value="">年份</option>
           </select>
-
           <select id="birthMonth">
             <option value="">月份</option>
           </select>
-
           <select id="birthDay">
             <option value="">日期</option>
           </select>
@@ -760,7 +894,6 @@
 
       <div class="field">
         <div class="field-label">性別</div>
-
         <select id="gender">
           <option value="">請選擇性別</option>
           <option value="男">男</option>
@@ -775,13 +908,144 @@
       <div id="registerMsg" class="small"></div>
     </section>
 
+
+
+    <section id="agreementView" class="surface agreement-card hidden">
+      <div class="mini-brand">LOVE BETTER JOURNEY</div>
+      <h1 class="title">活動須知與會員同意</h1>
+      <p class="subtitle">
+        閱讀並同意活動辦法後，才會開啟你的會員集點卡。簽署完成後，同版本不會重複要求簽名。
+      </p>
+
+      <div class="agreement-meta">
+        <span class="agreement-pill">版本：2026-09-09-v1</span>
+        <span class="agreement-pill">日本來回機票集點卡</span>
+      </div>
+
+      <div class="agreement-scroll" id="agreementScroll">
+        <h3>第一條｜活動資格與期間</h3>
+        <ol>
+          <li>限 LOVE BETTER 有效會員參加。</li>
+          <li>集點卡綁定會員帳號，不得轉讓、借用或與他人合併使用。</li>
+          <li>所有任務皆須經 LOVE BETTER 官方認列後始得完成。</li>
+          <li>自集點卡核發及註冊成功後，會員所參與之活動與完成之指定任務，始得作為本活動集點認列。</li>
+          <li>本活動自 2026 年 9 月 4 日開始至 2027 年 2 月 28 日或本活動預算用罄止，以時間先至者為準。主辦單位保留隨時修正、暫停、終止或解釋本活動之最終權利。</li>
+        </ol>
+
+        <h3>第二條｜集點方式</h3>
+        <p>會員依 LOVE BETTER APP 集點卡完成官方指定任務，經官方認列後即可累積點數。任務包含但不限於基礎任務、排約任務、活動任務、店家任務與成長任務。實際任務內容及完成方式依 LOVE BETTER APP 顯示及官方公告為準。</p>
+        <p>LOVE BETTER 保留新增、調整、刪除或更換任務內容之權利，恕不另行個別通知。</p>
+
+        <h3>第三條｜任務認列方式</h3>
+        <ol>
+          <li>所有任務皆以 LOVE BETTER 官方簽到紀錄、排約紀錄、消費紀錄及 APP 系統紀錄為準。</li>
+          <li>如各項紀錄內容不一致，以 LOVE BETTER 官方最終認列結果為準。</li>
+          <li>任務完成後，點數將於 7 個工作天內由官方完成認列，遇國定假日順延。</li>
+          <li>如因官方作業疏失未完成認列，會員可向官方提出申請，經查核後補發。</li>
+          <li>除官方作業疏失外，恕不接受人工補登、補點或補認列。</li>
+        </ol>
+
+        <h3>第四條｜任務規則</h3>
+        <ol>
+          <li>活動任務須於活動前繳清費用、完成活動簽到並全程參與活動。未簽到、臨時取消未到場、中途離場或未完成活動相關流程者，不予認列。</li>
+          <li>排約須完成官方認定流程始得認列。每日僅得認列一場排約任務，不同排約任務須於不同日期完成，始得分別認列。</li>
+          <li>店家任務不限最低消費金額，同一合作店家僅能認列一次，每次任務須至不同合作店家完成。</li>
+          <li>消費時須出示 LOVE BETTER 會員資格並使用會員優惠，並提交紙本消費發票或消費證明及會員優惠紀錄，經官方確認後始完成認列。</li>
+          <li>如為會員同行共同消費，一筆消費僅得由一人進行集點認列，不得以同筆消費多人分別集點。</li>
+          <li>各項任務僅能依 APP 指定內容或 LOVE BETTER 公告完成，不得以其他活動或服務替代。</li>
+        </ol>
+
+        <h3>第五條｜集點卡規則</h3>
+        <ol>
+          <li>集點卡各項任務無須依序完成。</li>
+          <li>集點卡進度將綁定會員帳號保存。</li>
+        </ol>
+
+        <h3>第六條｜續約與會籍</h3>
+        <ol>
+          <li>會員續約後，如本活動尚未結束，可延續原集點卡進度，不須重新開始。</li>
+          <li>集點卡將隨有效會員資格持續累積保留。</li>
+          <li>Moonshine 會員自會籍移轉至戀愛好事多起即可參加集點，並僅移轉後所參與之活動與排約可依規定集點，過往參與場次皆不計入。</li>
+        </ol>
+
+        <h3>第七條｜獎勵兌換</h3>
+        <ol>
+          <li>於本活動期間內完成集點卡所有指定任務並經官方確認後，即取得當期活動獎勵兌換資格。</li>
+          <li>集點卡完成可兌換日本沖繩來回機票代金券兌換憑證，市價新台幣八千元整乙份。</li>
+          <li>除會籍續約外，未完成所有集點任務而會籍解除、終止或到期者，已集點之點數自動失效，恕不得要求依比例兌換任何獎勵或主張任何權益。</li>
+        </ol>
+
+        <h3>第八條｜獎勵使用規範</h3>
+        <ol>
+          <li>日本沖繩來回機票代金券不得折換現金，不得要求更換其他商品。</li>
+          <li>本獎項限定會員本人兌換與搭乘，不得轉售、轉讓或兌換其他等值商品。</li>
+          <li>本活動獎勵之兌換不得指定沖繩以外之任何其他航點，相關安排依合作單位規定辦理。</li>
+          <li>LOVE BETTER 將主動通知符合資格之會員領取獎勵。會員須於通知日起 14 日內至戀愛好事多會館完成領取紙本兌換券，逾期視同放棄領取資格。</li>
+          <li>會員取得紙本兌換憑證後，應自行於期限內向主辦單位指定之合作旅行社進行兌獎，並自行與合作單位聯繫、購買所須航班機票。</li>
+          <li>兌換券折抵上限為新台幣八千元；若機票或加值服務超出補助上限，超出金額由會員自行支付；若低於八千元，不得要求退還剩餘金額。</li>
+          <li>會員兌獎應提供正確且有效之個人資料，如因資料錯誤、護照失效或效期不足導致無法使用或衍生費用，由會員自行負責。</li>
+          <li>本活動贈送之機票依中華民國稅法規定屬受贈者之其他所得，主辦單位將依規定辦理申報。</li>
+        </ol>
+
+        <h3>第九條｜不予認列情形</h3>
+        <p>未完成活動簽到、未完成指定流程、未完成指定消費、活動臨時取消未到場、活動中途離場、排約未完成或臨時取消、同一合作店家重複消費、使用他人會員資格、提供不實資料、冒名參加活動、取得集點卡前所參與之活動及完成之任務，或其他經 LOVE BETTER 認定不符合活動資格之情形，均不列入任務完成紀錄。</p>
+
+        <h3>第十條｜點數取消情形</h3>
+        <p>如有冒名參與、偽造資料、重複認列、惡意利用系統漏洞、不當取得活動資格、違反會員規範、代簽或代為參與活動，或經官方查證有影響活動公平性之行為，LOVE BETTER 有權取消已認列之點數及獎勵資格。如已兌換獎勵，LOVE BETTER 得取消其資格並要求返還獎勵；如行為已觸法，將依法追究。</p>
+
+        <h3>第十一條｜活動異動</h3>
+        <p>若因天災、疫情、政府法令、合作店家終止合作、活動取消、系統異常或其他不可抗力因素，導致任務無法完成或活動無法正常進行，LOVE BETTER 保留調整活動內容、任務內容、合作店家、點數認列方式及提供等值替代任務或獎勵之權利。本活動辦法若有未盡事宜，主辦單位保留補充修改之權利，所有更動皆以本活動集點網站公告為準，不另行通知。</p>
+
+        <h3>第十二條｜會員權益</h3>
+        <ol>
+          <li>集點卡及點數僅限本人使用。</li>
+          <li>點數不得轉讓、出售、交換。</li>
+          <li>任務完成資格皆以 LOVE BETTER 官方系統紀錄為準。</li>
+          <li>LOVE BETTER 保留會員是否符合任務完成資格、點數認列資格及獎勵資格之最終審核權。</li>
+        </ol>
+
+        <h3>第十三條｜官方保留權利</h3>
+        <p>LOVE BETTER 保留修改活動內容、任務內容、合作店家、點數認列方式、獎勵兌換方式、因不可抗力因素或合作異動調整活動獎勵、暫停、延長或提前終止活動，以及本活動辦法最終解釋、審核及決定權。所有公告皆以 LOVE BETTER 官方網站、APP、官方 LINE 或官方社群平台公告為準。</p>
+
+        <h3>常見問題 Q&A</h3>
+        <ul>
+          <li>續約會員可延續原集點卡進度，不須重新集點。</li>
+          <li>店家消費沒有最低金額限制，但須完成實際消費、使用會員優惠並提供證明。</li>
+          <li>同一合作店家僅能認列一次。</li>
+          <li>每日僅得認列一場排約任務。</li>
+          <li>任務完成後，將於 7 個工作天內完成認列，遇國定假日順延。</li>
+          <li>集滿 25 點並完成指定任務後，取得的是價值新台幣 8,000 元的機票代金兌換資格，並非直接取得實體機票。</li>
+        </ul>
+      </div>
+
+      <label class="agreement-check">
+        <input id="agreementAccepted" type="checkbox">
+        <span>
+          我已完整閱讀並同意 LOVE BETTER 日本來回機票集點卡活動辦法，並理解任務認列、點數發放、獎勵兌換及主辦單位保留調整權利等相關規範。
+        </span>
+      </label>
+
+      <div class="signature-box">
+        <div class="signature-head">
+          <div class="signature-title">會員本人簽名</div>
+          <button class="signature-clear" type="button" onclick="clearSignaturePad()">清除重簽</button>
+        </div>
+        <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+      </div>
+
+      <button class="btn btn-primary" type="button" onclick="submitAgreement()">
+        同意並進入會員集點卡
+      </button>
+
+      <div id="agreementMsg" class="small"></div>
+    </section>
+
     <section id="memberView" class="hidden"></section>
 
     <section class="surface staff-entry">
       <button class="btn btn-soft" type="button" onclick="openStaffPanel()">
         工作人員模式
       </button>
-
       <div id="staffView" class="hidden staff-panel"></div>
     </section>
   </main>
@@ -792,9 +1056,27 @@
     let ACCESS_TOKEN = "";
     let MY_CARD = null;
     let STAFF_DATA = null;
-    let SELECTED_SINGLE_MEMBER = null;
-    let SELECTED_SINGLE_TASKS = [];
-    let COVER_ENTERING = false;
+    let SIGNATURE_PAD_READY = false;
+    let SIGNATURE_DIRTY = false;
+
+    function setLoading(message) {
+      const loading = document.getElementById("loading");
+      loading.classList.remove("hidden");
+      loading.innerHTML = `
+        <div class="loader"></div>
+        <h1 class="title">處理中</h1>
+        <p class="subtitle">${escapeHtml(message)}</p>
+      `;
+    }
+
+    function showError(message) {
+      const loading = document.getElementById("loading");
+      loading.classList.remove("hidden");
+      loading.innerHTML = `
+        <h1 class="title">系統錯誤</h1>
+        <div class="error">${escapeHtml(message)}</div>
+      `;
+    }
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -812,29 +1094,8 @@
         .replace(/\r?\n/g, "");
     }
 
-    function pad2(number) {
-      return String(number).padStart(2, "0");
-    }
-
-    function setLoading(message) {
-      const loading = document.getElementById("loading");
-
-      loading.classList.remove("hidden");
-      loading.innerHTML = `
-        <div class="loader"></div>
-        <h1 class="title">處理中</h1>
-        <p class="subtitle">${escapeHtml(message)}</p>
-      `;
-    }
-
-    function showError(message) {
-      const loading = document.getElementById("loading");
-
-      loading.classList.remove("hidden");
-      loading.innerHTML = `
-        <h1 class="title">系統錯誤</h1>
-        <div class="error">${escapeHtml(message)}</div>
-      `;
+    function pad2(num) {
+      return String(num).padStart(2, "0");
     }
 
     function populateBirthdayOptions() {
@@ -843,7 +1104,6 @@
       const daySelect = document.getElementById("birthDay");
 
       if (!yearSelect || yearSelect.dataset.ready === "true") return;
-
       yearSelect.dataset.ready = "true";
 
       const currentYear = new Date().getFullYear();
@@ -911,14 +1171,168 @@
       return result.data;
     }
 
+
+
+    function hideAgreementView() {
+      const view = document.getElementById("agreementView");
+      if (view) view.classList.add("hidden");
+    }
+
+    async function showMemberOrAgreement(data) {
+      setLoading("正在確認活動須知同意狀態...");
+      const agreement = await api("checkAgreement");
+      document.getElementById("loading").classList.add("hidden");
+
+      if (agreement && agreement.agreed) {
+        hideAgreementView();
+        renderMemberCard(data);
+        return;
+      }
+
+      renderAgreementView();
+    }
+
+    function renderAgreementView() {
+      document.getElementById("registerView").classList.add("hidden");
+      document.getElementById("memberView").classList.add("hidden");
+      const view = document.getElementById("agreementView");
+      view.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      requestAnimationFrame(function() {
+        initSignaturePad();
+      });
+    }
+
+    function initSignaturePad() {
+      const canvas = document.getElementById("signatureCanvas");
+      if (!canvas) return;
+
+      const context = canvas.getContext("2d");
+      let drawing = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(Math.round(rect.width), 280);
+        const height = 180;
+        const ratio = window.devicePixelRatio || 1;
+
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        canvas.style.height = height + "px";
+
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        context.clearRect(0, 0, width, height);
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, width, height);
+        context.lineWidth = 3;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.strokeStyle = "#3c3036";
+        SIGNATURE_DIRTY = false;
+      }
+
+      function pointFromEvent(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        };
+      }
+
+      function start(event) {
+        event.preventDefault();
+        const point = pointFromEvent(event);
+        drawing = true;
+        lastX = point.x;
+        lastY = point.y;
+        context.beginPath();
+        context.moveTo(lastX, lastY);
+        canvas.setPointerCapture(event.pointerId);
+      }
+
+      function move(event) {
+        if (!drawing) return;
+        event.preventDefault();
+        const point = pointFromEvent(event);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+        lastX = point.x;
+        lastY = point.y;
+        SIGNATURE_DIRTY = true;
+      }
+
+      function end(event) {
+        if (!drawing) return;
+        event.preventDefault();
+        drawing = false;
+      }
+
+      if (!SIGNATURE_PAD_READY) {
+        canvas.addEventListener("pointerdown", start);
+        canvas.addEventListener("pointermove", move);
+        canvas.addEventListener("pointerup", end);
+        canvas.addEventListener("pointercancel", end);
+        canvas.addEventListener("pointerleave", end);
+        SIGNATURE_PAD_READY = true;
+      }
+
+      resizeCanvas();
+    }
+
+    function clearSignaturePad() {
+      const canvas = document.getElementById("signatureCanvas");
+      if (!canvas) return;
+
+      const context = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      context.clearRect(0, 0, rect.width, rect.height);
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, rect.width, rect.height);
+      SIGNATURE_DIRTY = false;
+    }
+
+    async function submitAgreement() {
+      const msg = document.getElementById("agreementMsg");
+      const accepted = document.getElementById("agreementAccepted").checked;
+      const canvas = document.getElementById("signatureCanvas");
+
+      if (!accepted) {
+        msg.innerHTML = '<span class="error">請先勾選同意活動辦法</span>';
+        return;
+      }
+
+      if (!SIGNATURE_DIRTY) {
+        msg.innerHTML = '<span class="error">請先在簽名區完成手寫簽名</span>';
+        return;
+      }
+
+      msg.textContent = "送出同意紀錄中...";
+
+      try {
+        await api("submitAgreement", {
+          accepted: true,
+          signatureDataUrl: canvas.toDataURL("image/png"),
+          userAgent: navigator.userAgent || ""
+        });
+
+        msg.innerHTML = '<span class="success">同意紀錄已完成，正在開啟會員集點卡...</span>';
+        hideAgreementView();
+        await showMemberOrAgreement(MY_CARD);
+      } catch (error) {
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
+      }
+    }
+
+
     async function init() {
       try {
         populateBirthdayOptions();
         setLoading("正在初始化 LINE 會員身分...");
 
-        await liff.init({
-          liffId: LIFF_ID
-        });
+        await liff.init({ liffId: LIFF_ID });
 
         if (!liff.isLoggedIn()) {
           setLoading("尚未登入 LINE，正在導向登入...");
@@ -933,7 +1347,6 @@
         }
 
         setLoading("已取得 LINE 身分，正在讀取會員資料...");
-
         MY_CARD = await api("getMyCard");
 
         document.getElementById("loading").classList.add("hidden");
@@ -943,14 +1356,16 @@
           return;
         }
 
-        renderMemberCard(MY_CARD);
+        await showMemberOrAgreement(MY_CARD);
       } catch (error) {
         showError(error && error.message ? error.message : error);
       }
     }
 
     async function submitRegister() {
-      const message = document.getElementById("registerMsg");
+      const msg = document.getElementById("registerMsg");
+      msg.textContent = "送出中...";
+
       const year = document.getElementById("birthYear").value;
       const month = document.getElementById("birthMonth").value;
       const day = document.getElementById("birthDay").value;
@@ -963,24 +1378,16 @@
       };
 
       if (!form.name || !form.phone || !form.gender) {
-        message.innerHTML = '<span class="error">姓名、手機、性別為必填欄位</span>';
+        msg.innerHTML = '<span class="error">姓名、手機、性別為必填欄位</span>';
         return;
       }
 
-      message.textContent = "送出中...";
-
       try {
         MY_CARD = await api("registerMember", form);
-
         document.getElementById("registerView").classList.add("hidden");
-
-        renderMemberCard(MY_CARD);
+        await showMemberOrAgreement(MY_CARD);
       } catch (error) {
-        message.innerHTML = `
-          <span class="error">
-            ${escapeHtml(error && error.message ? error.message : error)}
-          </span>
-        `;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
     }
 
@@ -988,9 +1395,15 @@
       return gender === "女" ? "♀" : "♂";
     }
 
+    function getMissionStatus(task) {
+      if (task.completed) return "已完成";
+      if (task.taskUrl) return task.buttonText || "前往解鎖";
+      return "未完成";
+    }
+
     function getDisplayMemberName(data) {
-      const profile = data?.profile || {};
-      const member = data?.member || {};
+      const profile = data && data.profile ? data.profile : {};
+      const member = data && data.member ? data.member : {};
 
       const candidates = [
         profile.lineName,
@@ -999,9 +1412,8 @@
         member.name
       ];
 
-      for (const candidate of candidates) {
-        const value = String(candidate || "").trim();
-
+      for (let i = 0; i < candidates.length; i++) {
+        const value = String(candidates[i] || "").trim();
         if (value) return value;
       }
 
@@ -1018,35 +1430,20 @@
       return "探索體驗還差 " + points + " 點，即可獲得日本來回機票";
     }
 
-    function getMissionStatus(task) {
-      if (task.completed) return "已完成";
-      if (task.taskUrl) return task.buttonText || "前往解鎖";
-      return "未完成";
-    }
-
     function renderMemberCard(data) {
+      hideAgreementView();
+      document.getElementById("loading").classList.add("hidden");
       const view = document.getElementById("memberView");
-
       view.classList.remove("hidden");
 
       const total = Number(data.totalPoints || 25);
       const completed = Number(data.completedPoints || 0);
-      const remaining = Math.max(
-        Number(data.remainingPoints ?? total - completed),
-        0
-      );
-
-      const percent = total > 0
-        ? Math.min(100, Math.round((completed / total) * 100))
-        : 0;
+      const remaining = Math.max(total - completed, 0);
+      const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
       const grouped = {};
-
       data.tasks.forEach(function(task) {
-        if (!grouped[task.category]) {
-          grouped[task.category] = [];
-        }
-
+        if (!grouped[task.category]) grouped[task.category] = [];
         grouped[task.category].push(task);
       });
 
@@ -1061,30 +1458,22 @@
         grouped[category].forEach(function(task) {
           const doneClass = task.completed ? "done" : "";
           const linkClass = task.taskUrl && !task.completed ? "is-link" : "";
-
-          const clickAction = task.taskUrl && !task.completed
+          const onClick = task.taskUrl && !task.completed
             ? `onclick="openTaskUrl('${escapeJsString(task.taskUrl)}')"`
             : "";
-
-          const disabled = task.taskUrl && !task.completed
-            ? ""
-            : "disabled";
 
           taskHtml += `
             <button
               class="mission-row ${doneClass} ${linkClass}"
               type="button"
-              ${clickAction}
-              ${disabled}
+              ${onClick}
+              ${task.taskUrl && !task.completed ? "" : "disabled"}
             >
               <span class="mission-left">
                 <span class="mission-dot">${task.completed ? "✓" : ""}</span>
                 <span class="mission-name">${escapeHtml(task.taskName)}</span>
               </span>
-
-              <span class="mission-status">
-                ${escapeHtml(getMissionStatus(task))}
-              </span>
+              <span class="mission-status">${escapeHtml(getMissionStatus(task))}</span>
             </button>
           `;
         });
@@ -1095,20 +1484,17 @@
       view.innerHTML = `
         <section class="surface member-card">
           <div class="member-brand-row">
-            <img
-              class="member-brand-logo"
-              src="./assets/lovebetter-logo-horizontal.png"
-              alt="Love Better 戀愛好多"
-            >
-
-            <span class="gender-mark">
-              ${getGenderSymbol(data.member.gender)}
-            </span>
+            <div class="member-brand">
+              <img
+                class="member-brand-logo"
+                src="./assets/lovebetter-logo-horizontal.png"
+                alt="Love Better 戀愛好多"
+              >
+            </div>
+            <span class="gender-mark">${getGenderSymbol(data.member.gender)}</span>
           </div>
 
-          <div class="member-greeting">
-            ${escapeHtml(getDisplayMemberName(data))}
-          </div>
+          <div class="member-greeting">${escapeHtml(getDisplayMemberName(data))}</div>
 
           <div class="member-progress">
             ${completed}<span>/${total}</span>
@@ -1123,7 +1509,6 @@
               TAIWAN
               <strong>台灣</strong>
             </div>
-
             <div class="to">
               JAPAN
               <strong>日本</strong>
@@ -1151,7 +1536,6 @@
             url: url,
             external: true
           });
-
           return;
         }
       } catch (error) {}
@@ -1161,7 +1545,6 @@
 
     async function openStaffPanel() {
       const staffView = document.getElementById("staffView");
-
       staffView.classList.remove("hidden");
       staffView.innerHTML = '<div class="small">工作人員資料讀取中...</div>';
 
@@ -1171,330 +1554,131 @@
         }
 
         STAFF_DATA = await api("getStaffPanelData");
-
         renderStaffPanel();
       } catch (error) {
-        staffView.innerHTML = `
-          <div class="error">
-            ${escapeHtml(error && error.message ? error.message : error)}
-          </div>
-        `;
+        staffView.innerHTML = `<div class="error">${escapeHtml(error && error.message ? error.message : error)}</div>`;
       }
     }
 
     function renderStaffPanel() {
       const staffView = document.getElementById("staffView");
 
+      const taskOptions = STAFF_DATA.tasks.map(function(task) {
+        return `<option value="${escapeHtml(task.taskId)}">${escapeHtml(task.gender)}｜${escapeHtml(task.category)}｜${escapeHtml(task.taskName)}</option>`;
+      }).join("");
+
       staffView.innerHTML = `
         <h2 class="section-title">工作人員發放任務</h2>
-
-        <p class="subtitle">
-          先查詢會員手機，系統會依會員性別只載入可發放的任務。
-        </p>
+        <p class="subtitle">輸入會員手機號碼，選擇完成任務即可發放點數與 LINE 圖卡通知。</p>
 
         <div class="field">
-          <div class="field-label">會員手機號碼或會員編號</div>
-          <input
-            id="singleMemberKey"
-            placeholder="例如 0912345678 或 LOVE0001"
-            inputmode="tel"
-          >
+          <div class="field-label">會員手機號碼</div>
+          <input id="singlePhone" placeholder="例如 0912345678" inputmode="tel">
         </div>
-
-        <button class="btn btn-soft" type="button" onclick="lookupSingleMember()">
-          查詢會員與任務
-        </button>
-
-        <div id="singleMemberSummary" class="hidden"></div>
 
         <div class="field">
           <div class="field-label">完成任務</div>
-
-          <select id="singleTaskId" class="staff-task-select" disabled>
-            <option value="">請先查詢會員</option>
-          </select>
+          <select id="singleTaskId">${taskOptions}</select>
         </div>
 
         <div class="field">
           <div class="field-label">備註</div>
-
-          <textarea
-            id="singleNote"
-            placeholder="例如：活動完成、預約完成"
-          ></textarea>
+          <textarea id="singleNote" placeholder="例如：活動完成、預約完成"></textarea>
         </div>
 
-        <button class="btn btn-dark" type="button" onclick="grantSingle()">
-          確認發放點數
-        </button>
-
+        <button class="btn btn-dark" type="button" onclick="grantSingle()">確認發放點數</button>
         <div id="singleMsg" class="small"></div>
 
         <div class="divider"></div>
 
         <h2 class="section-title">集體發放</h2>
 
-        <p class="subtitle">
-          集體任務請先選性別；系統只會發放該性別可完成的任務。
-        </p>
-
         <div class="field">
           <div class="field-label">發放模式</div>
-
-          <select id="bulkMode" onchange="onBulkModeChange()">
-            <option value="gender">依性別集體發放</option>
-            <option value="ids">指定會員 ID 批量發放</option>
+          <select id="bulkMode">
+            <option value="all">全部會員</option>
+            <option value="gender">依性別發放</option>
+            <option value="ids">貼上會員 ID 批量發放</option>
           </select>
         </div>
 
-        <div id="bulkGenderField" class="field">
+        <div class="field">
           <div class="field-label">性別篩選</div>
-
-          <select id="bulkGender" onchange="updateBulkTaskOptions()">
+          <select id="bulkGender">
             <option value="男">男</option>
             <option value="女">女</option>
           </select>
         </div>
 
-        <div id="bulkIdsField" class="field hidden">
+        <div class="field">
           <div class="field-label">會員 ID 批量輸入</div>
-
-          <textarea
-            id="bulkMemberIds"
-            placeholder="例如 LOVE0001、LOVE0002，可用逗號或換行分隔"
-          ></textarea>
-
-          <div class="staff-hint">
-            指定會員模式可混合男女，不符合所選任務性別的會員會自動略過。
-          </div>
+          <textarea id="bulkMemberIds" placeholder="例如 LOVE0001、LOVE0002，可用逗號或換行分隔"></textarea>
         </div>
 
         <div class="field">
           <div class="field-label">完成任務</div>
-          <select id="bulkTaskId"></select>
+          <select id="bulkTaskId">${taskOptions}</select>
         </div>
 
         <div class="field">
           <div class="field-label">備註</div>
-
-          <textarea
-            id="bulkNote"
-            placeholder="例如：年度活動集體完成"
-          ></textarea>
+          <textarea id="bulkNote" placeholder="例如：年度活動集體完成"></textarea>
         </div>
 
-        <button class="btn btn-dark" type="button" onclick="grantBulk()">
-          集體發放點數
-        </button>
-
+        <button class="btn btn-dark" type="button" onclick="grantBulk()">集體發放點數</button>
         <div id="bulkMsg" class="small"></div>
       `;
-
-      onBulkModeChange();
-    }
-
-    function renderTaskOptions(tasks, placeholder) {
-      const first = `
-        <option value="">
-          ${escapeHtml(placeholder || "請選擇任務")}
-        </option>
-      `;
-
-      const options = tasks.map(function(task) {
-        return `
-          <option value="${escapeHtml(task.taskId)}">
-            ${escapeHtml(task.category)}｜${escapeHtml(task.taskName)}
-          </option>
-        `;
-      }).join("");
-
-      return first + options;
-    }
-
-    async function lookupSingleMember() {
-      const keyInput = document.getElementById("singleMemberKey");
-      const summary = document.getElementById("singleMemberSummary");
-      const taskSelect = document.getElementById("singleTaskId");
-      const message = document.getElementById("singleMsg");
-
-      const memberKey = keyInput.value.trim();
-
-      SELECTED_SINGLE_MEMBER = null;
-      SELECTED_SINGLE_TASKS = [];
-
-      summary.classList.add("hidden");
-      taskSelect.disabled = true;
-      taskSelect.innerHTML = '<option value="">查詢中...</option>';
-      message.textContent = "";
-
-      if (!memberKey) {
-        taskSelect.innerHTML = '<option value="">請輸入手機或會員編號</option>';
-        message.innerHTML = '<span class="error">請先輸入會員手機號碼或會員編號</span>';
-        return;
-      }
-
-      try {
-        const result = await api("getMemberTasksForStaff", {
-          memberKey: memberKey
-        });
-
-        SELECTED_SINGLE_MEMBER = result.member;
-        SELECTED_SINGLE_TASKS = result.tasks || [];
-
-        taskSelect.disabled = false;
-
-        taskSelect.innerHTML = renderTaskOptions(
-          SELECTED_SINGLE_TASKS,
-          "請選擇「" + (result.member.gender || "") + "」會員任務"
-        );
-
-        summary.className = "staff-member-summary";
-
-        summary.innerHTML = `
-          已找到會員：
-          <strong>
-            ${escapeHtml(
-              result.member.displayName ||
-              result.member.lineName ||
-              result.member.name ||
-              "LINE好友會員"
-            )}
-          </strong>
-          <br>
-          會員編號：${escapeHtml(result.member.memberId || "-")}
-         　性別：${escapeHtml(result.member.gender || "-")}
-          <br>
-          已載入 ${SELECTED_SINGLE_TASKS.length} 項可發放任務
-        `;
-      } catch (error) {
-        taskSelect.innerHTML = '<option value="">查詢失敗</option>';
-
-        message.innerHTML = `
-          <span class="error">
-            ${escapeHtml(error && error.message ? error.message : error)}
-          </span>
-        `;
-      }
-    }
-
-    function onBulkModeChange() {
-      const mode = document.getElementById("bulkMode").value;
-      const genderField = document.getElementById("bulkGenderField");
-      const idsField = document.getElementById("bulkIdsField");
-
-      if (mode === "gender") {
-        genderField.classList.remove("hidden");
-        idsField.classList.add("hidden");
-      } else {
-        genderField.classList.add("hidden");
-        idsField.classList.remove("hidden");
-      }
-
-      updateBulkTaskOptions();
-    }
-
-    function updateBulkTaskOptions() {
-      const mode = document.getElementById("bulkMode").value;
-      const gender = document.getElementById("bulkGender").value;
-      const select = document.getElementById("bulkTaskId");
-
-      let tasks = STAFF_DATA?.tasks || [];
-
-      if (mode === "gender") {
-        tasks = tasks.filter(function(task) {
-          return task.gender === gender;
-        });
-      }
-
-      select.innerHTML = renderTaskOptions(tasks, "請選擇任務");
     }
 
     async function grantSingle() {
-      const message = document.getElementById("singleMsg");
-      const taskId = document.getElementById("singleTaskId").value;
-
-      if (!SELECTED_SINGLE_MEMBER) {
-        message.innerHTML = '<span class="error">請先查詢會員，再選擇任務</span>';
-        return;
-      }
-
-      if (!taskId) {
-        message.innerHTML = '<span class="error">請選擇要發放的任務</span>';
-        return;
-      }
-
-      message.textContent = "發放中...";
+      const msg = document.getElementById("singleMsg");
+      msg.textContent = "發放中...";
 
       try {
         const result = await api("grantTaskToMember", {
-          memberId: SELECTED_SINGLE_MEMBER.memberId,
-          taskId: taskId,
+          memberId: document.getElementById("singlePhone").value.trim(),
+          taskId: document.getElementById("singleTaskId").value,
           note: document.getElementById("singleNote").value.trim()
         });
 
-        message.innerHTML = `
-          <span class="success">
-            ${escapeHtml(result.message)}
-          </span>
-        `;
+        msg.innerHTML = `<span class="success">${escapeHtml(result.message)}</span>`;
       } catch (error) {
-        message.innerHTML = `
-          <span class="error">
-            ${escapeHtml(error && error.message ? error.message : error)}
-          </span>
-        `;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
     }
 
     async function grantBulk() {
-      const message = document.getElementById("bulkMsg");
-      const mode = document.getElementById("bulkMode").value;
-      const taskId = document.getElementById("bulkTaskId").value;
-      const memberIds = document.getElementById("bulkMemberIds").value.trim();
-
-      if (!taskId) {
-        message.innerHTML = '<span class="error">請選擇要發放的任務</span>';
-        return;
-      }
-
-      if (mode === "ids" && !memberIds) {
-        message.innerHTML = '<span class="error">請貼上至少一個會員 ID</span>';
-        return;
-      }
-
-      message.textContent = "集體發放中...";
+      const msg = document.getElementById("bulkMsg");
+      msg.textContent = "集體發放中...";
 
       try {
         const result = await api("bulkGrantTask", {
-          mode: mode,
+          mode: document.getElementById("bulkMode").value,
           gender: document.getElementById("bulkGender").value,
-          memberIds: memberIds,
-          taskId: taskId,
+          memberIds: document.getElementById("bulkMemberIds").value,
+          taskId: document.getElementById("bulkTaskId").value,
           note: document.getElementById("bulkNote").value.trim()
         });
 
-        message.innerHTML = `
+        msg.innerHTML = `
           <span class="success">
             發放完成<br>
-            新增點數：${Number(result.addedCount || 0)} 筆<br>
-            已完成或不符合任務資格略過：${Number(result.skippedCount || 0)} 筆
+            新增點數：${result.addedCount} 筆<br>
+            已完成略過：${result.skippedCount} 筆<br>
+            LINE 圖卡已送出：${result.pushSuccessCount} 筆<br>
+            LINE 圖卡失敗：${result.pushFailCount} 筆
           </span>
         `;
       } catch (error) {
-        message.innerHTML = `
-          <span class="error">
-            ${escapeHtml(error && error.message ? error.message : error)}
-          </span>
-        `;
+        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       }
     }
 
+    let COVER_ENTERING = false;
+
     function setLoginCoverLoadingText(text) {
       const target = document.getElementById("loginCoverLoadingText");
-
-      if (target) {
-        target.textContent = text;
-      }
+      if (target) target.textContent = text;
     }
 
     function closeLoginCover() {
@@ -1511,13 +1695,11 @@
       COVER_ENTERING = true;
 
       const cover = document.getElementById("loginCover");
-
       if (cover) {
         cover.classList.add("is-entering");
       }
 
       setLoginCoverLoadingText(text);
-
       return true;
     }
 
@@ -1526,11 +1708,7 @@
 
       setTimeout(function() {
         closeLoginCover();
-
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }, 180);
     }
 
@@ -1541,7 +1719,6 @@
         closeLoginCover();
 
         const startedAt = Date.now();
-
         const timer = setInterval(function() {
           if (ACCESS_TOKEN || Date.now() - startedAt > 6000) {
             clearInterval(timer);
