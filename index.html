@@ -703,8 +703,13 @@
       margin: 4px 0;
     }
 
+    .qa-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
     .qa-details {
-      margin-top: 16px;
       border: 1px solid #f3c2d6;
       border-radius: 16px;
       background: #fff2f7;
@@ -712,13 +717,16 @@
     }
 
     .qa-details summary {
-      min-height: 48px;
-      display: flex;
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
       align-items: center;
-      padding: 0 13px;
+      padding: 12px 14px;
       color: #8d3e64;
       font-size: 14px;
       font-weight: 950;
+      line-height: 1.45;
       cursor: pointer;
       list-style: none;
     }
@@ -729,18 +737,37 @@
 
     .qa-details summary::after {
       content: "＋";
-      margin-left: auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: var(--pink-dark);
       font-weight: 950;
+      box-shadow: 0 6px 16px rgba(237, 94, 157, 0.12);
     }
 
     .qa-details[open] summary::after {
       content: "－";
     }
 
-    .qa-details ul {
+    .qa-answer {
       margin: 0;
-      padding: 0 16px 14px 32px;
+      padding: 0 16px 15px 16px;
       background: #fffafd;
+      color: #4f4148;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .qa-answer p {
+      margin: 0 0 10px;
+    }
+
+    .qa-answer p:last-child {
+      margin-bottom: 0;
     }
 
     .agreement-check {
@@ -1176,17 +1203,72 @@
         <h3>第十三條｜官方保留權利</h3>
         <p>LOVE BETTER 保留修改活動內容、任務內容、合作店家、點數認列方式、獎勵兌換方式、因不可抗力因素或合作異動調整活動獎勵、暫停、延長或提前終止活動，以及本活動辦法最終解釋、審核及決定權。所有公告皆以 LOVE BETTER 官方網站、APP、官方 LINE 或官方社群平台公告為準。</p>
 
-        <details class="qa-details">
-          <summary>常見問題 Q&A｜點開查看</summary>
-          <ul>
-            <li>續約會員可延續原集點卡進度，不須重新集點。</li>
-            <li>店家消費沒有最低金額限制，但須完成實際消費、使用會員優惠並提供證明。</li>
-            <li>同一合作店家僅能認列一次。</li>
-            <li>每日僅得認列一場排約任務。</li>
-            <li>任務完成後，將於 7 個工作天內完成認列，遇國定假日順延。</li>
-            <li>集滿 25 點並完成指定任務後，取得的是價值新台幣 8,000 元的機票代金兌換資格，並非直接取得實體機票。</li>
-          </ul>
-        </details>
+        <h3>常見問題 Q&amp;A</h3>
+        <div class="qa-list">
+          <details class="qa-details">
+            <summary>Q1.續約後需要重新集點嗎？</summary>
+            <div class="qa-answer">
+              <p>不用。續約會員可延續原集點卡進度。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q2.彰化Moonshine轉為戀愛好事多會員可以集點嗎？</summary>
+            <div class="qa-answer">
+              <p>可以。彰化會員完成轉約並取得 <strong>LOVE BETTER（戀愛好事多）有效會員資格</strong>後，即可參與集點活動；未取得 LOVE BETTER 會員資格者，恕無法參與本活動。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q3.店家消費有最低金額限制嗎？</summary>
+            <div class="qa-answer">
+              <p>沒有最低消費金額限制，但須完成實際消費、使用會員優惠，並提供消費發票（或消費證明）及會員優惠紀錄，經官方確認後始完成任務認列。單筆消費為會員多人同行之情形僅得由一人進行集點認列。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q4.可以一直去同一家店集點嗎？</summary>
+            <div class="qa-answer">
+              <p>不可以。同一合作店家僅能認列一次，如欲完成其他店家任務，須至不同合作店家消費。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q5.同一天可以完成多場排約嗎？</summary>
+            <div class="qa-answer">
+              <p>不可以。每日僅得認列一場排約任務。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q6.點數多久會入帳？</summary>
+            <div class="qa-answer">
+              <p>任務完成後，將於 7 個工作天內完成認列，如遇國定假日將順延。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q7.忘記簽到可以補點嗎？</summary>
+            <div class="qa-answer">
+              <p>所有任務皆以官方簽到及系統紀錄為準。如因官方作業疏失未認列，經查核後可補發；其餘情況恕不接受補登。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q8.完成集點卡後如何領取日本來回機票兌換憑證？</summary>
+            <div class="qa-answer">
+              <p>符合兌換資格後，LOVE BETTER 將主動通知會員領取獎勵，會員須於通知日起 14 日內完成領取，逾期視同放棄領取資格。</p>
+            </div>
+          </details>
+
+          <details class="qa-details">
+            <summary>Q9.集滿25點就直接送一張機票嗎？</summary>
+            <div class="qa-answer">
+              <p>不是喔！集滿 25 點並完成指定任務後，獲得的是價值新台幣 8,000 元的機票代金兌換資格，並非直接取得實體機票。</p>
+              <p>符合兌換資格後，須於指定期限內親自至<strong>戀愛好事多會館</strong>，填寫並領取紙本「機票代金兌換券」，完成兌換程序後，再依相關規定向合作旅行社完成機票開票作業。</p>
+            </div>
+          </details>
+        </div>
       </div>
 
       <label class="agreement-check">
