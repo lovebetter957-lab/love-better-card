@@ -868,6 +868,12 @@
       </p>
 
       <div class="field">
+        <div class="field-label">會員編號／合約編號</div>
+        <input id="memberId" placeholder="例如 LBA-0000" autocomplete="off" autocapitalize="characters">
+        <div class="small">請輸入 3 個英文代碼、一槓、4 個數字。</div>
+      </div>
+
+      <div class="field">
         <div class="field-label">真實姓名</div>
         <input id="name" placeholder="請輸入姓名">
       </div>
@@ -1052,6 +1058,14 @@
 
   <script>
     const LIFF_ID = "2010212550-s957LSzk";
+    const MEMBER_ID_PREFIXES = [
+      "LBB", "LBA", "LBG",
+      "STA", "STB", "STG",
+      "MTA", "MTB",
+      "CTA", "CTB", "CTG",
+      "XYA", "XYB", "XYG"
+    ];
+    const MEMBER_ID_ERROR = "會員資料驗證失敗，請確認會員編號是否正確。";
 
     let ACCESS_TOKEN = "";
     let MY_CARD = null;
@@ -1096,6 +1110,29 @@
 
     function pad2(num) {
       return String(num).padStart(2, "0");
+    }
+
+    function normalizeMemberId(value) {
+      return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[－—–]/g, "-");
+    }
+
+    function isValidMemberId(value) {
+      const memberId = normalizeMemberId(value);
+      const pattern = new RegExp("^(" + MEMBER_ID_PREFIXES.join("|") + ")-\\d{4}$");
+      return pattern.test(memberId);
+    }
+
+    function requireValidMemberId(value) {
+      const memberId = normalizeMemberId(value);
+
+      if (!isValidMemberId(memberId)) {
+        throw new Error(MEMBER_ID_ERROR);
+      }
+
+      return memberId;
     }
 
     function populateBirthdayOptions() {
@@ -1309,7 +1346,7 @@
         return;
       }
 
-      msg.textContent = "送出同意紀錄中...";
+      msg.textContent = "正在建立同意紀錄與 PDF 檔...";
 
       try {
         await api("submitAgreement", {
@@ -1318,7 +1355,7 @@
           userAgent: navigator.userAgent || ""
         });
 
-        msg.innerHTML = '<span class="success">同意紀錄已完成，正在開啟會員集點卡...</span>';
+        msg.innerHTML = '<span class="success">同意紀錄與 PDF 已完成，正在開啟會員集點卡...</span>';
         hideAgreementView();
         await showMemberOrAgreement(MY_CARD);
       } catch (error) {
@@ -1330,6 +1367,13 @@
     async function init() {
       try {
         populateBirthdayOptions();
+
+        const memberIdInput = document.getElementById("memberId");
+        if (memberIdInput) {
+          memberIdInput.addEventListener("input", function() {
+            memberIdInput.value = normalizeMemberId(memberIdInput.value);
+          });
+        }
         setLoading("正在初始化 LINE 會員身分...");
 
         await liff.init({ liffId: LIFF_ID });
@@ -1370,7 +1414,17 @@
       const month = document.getElementById("birthMonth").value;
       const day = document.getElementById("birthDay").value;
 
+      let memberId;
+
+      try {
+        memberId = requireValidMemberId(document.getElementById("memberId").value);
+      } catch (error) {
+        msg.innerHTML = `<span class="error">${escapeHtml(error.message || MEMBER_ID_ERROR)}</span>`;
+        return;
+      }
+
       const form = {
+        memberId: memberId,
         name: document.getElementById("name").value.trim(),
         phone: document.getElementById("phone").value.trim(),
         birthday: year && month && day ? `${year}-${month}-${day}` : "",
@@ -1378,7 +1432,7 @@
       };
 
       if (!form.name || !form.phone || !form.gender) {
-        msg.innerHTML = '<span class="error">姓名、手機、性別為必填欄位</span>';
+        msg.innerHTML = '<span class="error">會員資料未填完整，請重新確認。</span>';
         return;
       }
 
@@ -1569,11 +1623,11 @@
 
       staffView.innerHTML = `
         <h2 class="section-title">工作人員發放任務</h2>
-        <p class="subtitle">輸入會員手機號碼，選擇完成任務即可發放點數與 LINE 圖卡通知。</p>
+        <p class="subtitle">輸入會員編號／合約編號，選擇完成任務即可發放點數與 LINE 圖卡通知。</p>
 
         <div class="field">
-          <div class="field-label">會員手機號碼</div>
-          <input id="singlePhone" placeholder="例如 0912345678" inputmode="tel">
+          <div class="field-label">會員編號／合約編號</div>
+          <input id="singleMemberId" placeholder="例如 LBA-0000" autocomplete="off" autocapitalize="characters">
         </div>
 
         <div class="field">
@@ -1598,7 +1652,7 @@
           <select id="bulkMode">
             <option value="all">全部會員</option>
             <option value="gender">依性別發放</option>
-            <option value="ids">貼上會員 ID 批量發放</option>
+            <option value="ids">貼上會員編號批量發放</option>
           </select>
         </div>
 
@@ -1611,8 +1665,8 @@
         </div>
 
         <div class="field">
-          <div class="field-label">會員 ID 批量輸入</div>
-          <textarea id="bulkMemberIds" placeholder="例如 LOVE0001、LOVE0002，可用逗號或換行分隔"></textarea>
+          <div class="field-label">會員編號批量輸入</div>
+          <textarea id="bulkMemberIds" placeholder="例如 LBA-0001、LBB-0002，可用逗號或換行分隔"></textarea>
         </div>
 
         <div class="field">
@@ -1635,8 +1689,10 @@
       msg.textContent = "發放中...";
 
       try {
+        const memberId = requireValidMemberId(document.getElementById("singleMemberId").value);
+
         const result = await api("grantTaskToMember", {
-          memberId: document.getElementById("singlePhone").value.trim(),
+          memberId: memberId,
           taskId: document.getElementById("singleTaskId").value,
           note: document.getElementById("singleNote").value.trim()
         });
@@ -1652,10 +1708,27 @@
       msg.textContent = "集體發放中...";
 
       try {
+        const mode = document.getElementById("bulkMode").value;
+        let memberIds = document.getElementById("bulkMemberIds").value;
+
+        if (mode === "ids") {
+          const ids = memberIds
+            .split(/\n|,|，|\s/)
+            .map(normalizeMemberId)
+            .filter(Boolean);
+
+          if (!ids.length) {
+            throw new Error("請輸入會員編號");
+          }
+
+          ids.forEach(requireValidMemberId);
+          memberIds = ids.join("\n");
+        }
+
         const result = await api("bulkGrantTask", {
-          mode: document.getElementById("bulkMode").value,
+          mode: mode,
           gender: document.getElementById("bulkGender").value,
-          memberIds: document.getElementById("bulkMemberIds").value,
+          memberIds: memberIds,
           taskId: document.getElementById("bulkTaskId").value,
           note: document.getElementById("bulkNote").value.trim()
         });
