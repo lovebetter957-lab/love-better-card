@@ -41,6 +41,12 @@
         linear-gradient(180deg, #f7bfd4 0%, #ef83b2 52%, #f5a5c4 100%);
     }
 
+    body.is-signing {
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
     button,
     input,
     select,
@@ -697,6 +703,46 @@
       margin: 4px 0;
     }
 
+    .qa-details {
+      margin-top: 16px;
+      border: 1px solid #f3c2d6;
+      border-radius: 16px;
+      background: #fff2f7;
+      overflow: hidden;
+    }
+
+    .qa-details summary {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 13px;
+      color: #8d3e64;
+      font-size: 14px;
+      font-weight: 950;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .qa-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .qa-details summary::after {
+      content: "＋";
+      margin-left: auto;
+      font-weight: 950;
+    }
+
+    .qa-details[open] summary::after {
+      content: "－";
+    }
+
+    .qa-details ul {
+      margin: 0;
+      padding: 0 16px 14px 32px;
+      background: #fffafd;
+    }
+
     .agreement-check {
       display: flex;
       gap: 10px;
@@ -722,6 +768,12 @@
 
     .signature-box {
       margin-top: 15px;
+      padding: 12px;
+      border: 1px solid #f3c2d6;
+      border-radius: 20px;
+      background: #fffafd;
+      touch-action: none;
+      overscroll-behavior: contain;
     }
 
     .signature-head {
@@ -754,11 +806,15 @@
     .signature-canvas {
       display: block;
       width: 100%;
-      height: 180px;
+      height: 220px;
       border: 1.5px dashed #ec9bbd;
       border-radius: 18px;
       background: #fff;
       touch-action: none;
+      overscroll-behavior: contain;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
     }
 
     /* 工作人員 */
@@ -783,6 +839,107 @@
       height: 1px;
       margin: 20px 0;
       background: #f0dce5;
+    }
+
+
+    @media (max-width: 520px) {
+      html,
+      body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      .app-shell {
+        width: 100%;
+        padding: 14px 11px 34px;
+        overflow: visible;
+      }
+
+      .surface {
+        border-radius: 22px;
+      }
+
+      .loading-card,
+      .register-card,
+      .agreement-card,
+      .staff-card,
+      .staff-panel {
+        padding: 17px;
+      }
+
+      .title {
+        font-size: 22px;
+      }
+
+      .subtitle {
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      input,
+      select,
+      textarea {
+        min-height: 48px;
+        padding: 12px 13px;
+        border-radius: 14px;
+        font-size: 16px;
+      }
+
+      .field {
+        margin-top: 13px;
+      }
+
+      .birthday-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 7px;
+      }
+
+      .btn {
+        min-height: 50px;
+        border-radius: 16px;
+      }
+
+      .agreement-scroll {
+        max-height: 42vh;
+        padding: 12px;
+        border-radius: 16px;
+        font-size: 13px;
+        line-height: 1.68;
+      }
+
+      .agreement-scroll h3 {
+        font-size: 14px;
+      }
+
+      .agreement-check {
+        padding: 12px;
+        border-radius: 15px;
+        font-size: 13px;
+      }
+
+      .signature-canvas {
+        height: 240px;
+      }
+
+      .mission-board {
+        padding: 16px 12px 12px;
+      }
+
+      .category-card {
+        padding: 12px;
+        border-radius: 18px;
+      }
+
+      .mission-row {
+        align-items: flex-start;
+        border-radius: 18px;
+        padding: 9px;
+      }
+
+      .mission-status {
+        min-width: 64px;
+      }
     }
 
     @media (max-width: 360px) {
@@ -881,6 +1038,12 @@
       <div class="field">
         <div class="field-label">手機號碼</div>
         <input id="phone" placeholder="請輸入手機號碼，例如 0912345678" inputmode="tel">
+      </div>
+
+      <div class="field">
+        <div class="field-label">電子信箱</div>
+        <input id="email" type="email" placeholder="請輸入可接收合約 PDF 的 Email" autocomplete="email" inputmode="email">
+        <div class="small">簽署完成後，系統會自動把活動辦法 PDF 寄到此信箱。</div>
       </div>
 
       <div class="field">
@@ -1013,15 +1176,17 @@
         <h3>第十三條｜官方保留權利</h3>
         <p>LOVE BETTER 保留修改活動內容、任務內容、合作店家、點數認列方式、獎勵兌換方式、因不可抗力因素或合作異動調整活動獎勵、暫停、延長或提前終止活動，以及本活動辦法最終解釋、審核及決定權。所有公告皆以 LOVE BETTER 官方網站、APP、官方 LINE 或官方社群平台公告為準。</p>
 
-        <h3>常見問題 Q&A</h3>
-        <ul>
-          <li>續約會員可延續原集點卡進度，不須重新集點。</li>
-          <li>店家消費沒有最低金額限制，但須完成實際消費、使用會員優惠並提供證明。</li>
-          <li>同一合作店家僅能認列一次。</li>
-          <li>每日僅得認列一場排約任務。</li>
-          <li>任務完成後，將於 7 個工作天內完成認列，遇國定假日順延。</li>
-          <li>集滿 25 點並完成指定任務後，取得的是價值新台幣 8,000 元的機票代金兌換資格，並非直接取得實體機票。</li>
-        </ul>
+        <details class="qa-details">
+          <summary>常見問題 Q&A｜點開查看</summary>
+          <ul>
+            <li>續約會員可延續原集點卡進度，不須重新集點。</li>
+            <li>店家消費沒有最低金額限制，但須完成實際消費、使用會員優惠並提供證明。</li>
+            <li>同一合作店家僅能認列一次。</li>
+            <li>每日僅得認列一場排約任務。</li>
+            <li>任務完成後，將於 7 個工作天內完成認列，遇國定假日順延。</li>
+            <li>集滿 25 點並完成指定任務後，取得的是價值新台幣 8,000 元的機票代金兌換資格，並非直接取得實體機票。</li>
+          </ul>
+        </details>
       </div>
 
       <label class="agreement-check">
@@ -1135,6 +1300,14 @@
       return memberId;
     }
 
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
+    }
+
     function populateBirthdayOptions() {
       const yearSelect = document.getElementById("birthYear");
       const monthSelect = document.getElementById("birthMonth");
@@ -1241,6 +1414,10 @@
       });
     }
 
+    function setSignatureScrollLock(locked) {
+      document.body.classList.toggle("is-signing", Boolean(locked));
+    }
+
     function initSignaturePad() {
       const canvas = document.getElementById("signatureCanvas");
       if (!canvas) return;
@@ -1250,10 +1427,10 @@
       let lastX = 0;
       let lastY = 0;
 
-      function resizeCanvas() {
+      function prepareContext() {
         const rect = canvas.getBoundingClientRect();
         const width = Math.max(Math.round(rect.width), 280);
-        const height = 180;
+        const height = Math.max(Math.round(rect.height), 220);
         const ratio = window.devicePixelRatio || 1;
 
         canvas.width = Math.round(width * ratio);
@@ -1264,11 +1441,16 @@
         context.clearRect(0, 0, width, height);
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, width, height);
-        context.lineWidth = 3;
+        context.lineWidth = 3.2;
         context.lineCap = "round";
         context.lineJoin = "round";
         context.strokeStyle = "#3c3036";
         SIGNATURE_DIRTY = false;
+      }
+
+      function blockTouch(event) {
+        event.preventDefault();
+        event.stopPropagation();
       }
 
       function pointFromEvent(event) {
@@ -1280,19 +1462,23 @@
       }
 
       function start(event) {
-        event.preventDefault();
+        blockTouch(event);
         const point = pointFromEvent(event);
         drawing = true;
+        setSignatureScrollLock(true);
         lastX = point.x;
         lastY = point.y;
         context.beginPath();
         context.moveTo(lastX, lastY);
-        canvas.setPointerCapture(event.pointerId);
+
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch (error) {}
       }
 
       function move(event) {
         if (!drawing) return;
-        event.preventDefault();
+        blockTouch(event);
         const point = pointFromEvent(event);
         context.lineTo(point.x, point.y);
         context.stroke();
@@ -1303,20 +1489,27 @@
 
       function end(event) {
         if (!drawing) return;
-        event.preventDefault();
+        blockTouch(event);
         drawing = false;
+        setSignatureScrollLock(false);
+
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch (error) {}
       }
 
       if (!SIGNATURE_PAD_READY) {
-        canvas.addEventListener("pointerdown", start);
-        canvas.addEventListener("pointermove", move);
-        canvas.addEventListener("pointerup", end);
-        canvas.addEventListener("pointercancel", end);
-        canvas.addEventListener("pointerleave", end);
+        canvas.addEventListener("pointerdown", start, { passive: false });
+        canvas.addEventListener("pointermove", move, { passive: false });
+        canvas.addEventListener("pointerup", end, { passive: false });
+        canvas.addEventListener("pointercancel", end, { passive: false });
+        canvas.addEventListener("pointerleave", end, { passive: false });
+        canvas.addEventListener("touchstart", blockTouch, { passive: false });
+        canvas.addEventListener("touchmove", blockTouch, { passive: false });
         SIGNATURE_PAD_READY = true;
       }
 
-      resizeCanvas();
+      prepareContext();
     }
 
     function clearSignaturePad() {
@@ -1329,6 +1522,7 @@
       context.fillStyle = "#ffffff";
       context.fillRect(0, 0, rect.width, rect.height);
       SIGNATURE_DIRTY = false;
+      setSignatureScrollLock(false);
     }
 
     async function submitAgreement() {
@@ -1346,7 +1540,7 @@
         return;
       }
 
-      msg.textContent = "正在建立同意紀錄與 PDF 檔...";
+      msg.textContent = "正在建立同意紀錄、PDF 檔並寄送至 Email...";
 
       try {
         await api("submitAgreement", {
@@ -1355,7 +1549,7 @@
           userAgent: navigator.userAgent || ""
         });
 
-        msg.innerHTML = '<span class="success">同意紀錄與 PDF 已完成，正在開啟會員集點卡...</span>';
+        msg.innerHTML = '<span class="success">同意紀錄、PDF 與 Email 寄送流程已完成，正在開啟會員集點卡...</span>';
         hideAgreementView();
         await showMemberOrAgreement(MY_CARD);
       } catch (error) {
@@ -1363,6 +1557,47 @@
       }
     }
 
+
+    function fillRegisterForm(member) {
+      if (!member) return;
+
+      const memberIdInput = document.getElementById("memberId");
+      const nameInput = document.getElementById("name");
+      const phoneInput = document.getElementById("phone");
+      const emailInput = document.getElementById("email");
+      const genderInput = document.getElementById("gender");
+
+      if (memberIdInput) memberIdInput.value = normalizeMemberId(member.memberId);
+      if (nameInput) nameInput.value = member.realName || member.name || "";
+      if (phoneInput) phoneInput.value = member.phone || "";
+      if (emailInput) emailInput.value = normalizeEmail(member.email || "");
+      if (genderInput) genderInput.value = member.gender || "";
+
+      if (member.birthday) {
+        const parts = String(member.birthday).split("-");
+        if (parts.length === 3) {
+          document.getElementById("birthYear").value = parts[0];
+          document.getElementById("birthMonth").value = parts[1];
+          document.getElementById("birthMonth").dispatchEvent(new Event("change"));
+          document.getElementById("birthDay").value = parts[2];
+        }
+      }
+    }
+
+    function showRegisterFormForMissingEmail(member) {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("agreementView").classList.add("hidden");
+      document.getElementById("memberView").classList.add("hidden");
+      document.getElementById("registerView").classList.remove("hidden");
+      fillRegisterForm(member);
+
+      const msg = document.getElementById("registerMsg");
+      if (msg) {
+        msg.innerHTML = '<span class="error">請先補上電子信箱，系統才能把簽署後的 PDF 合約寄到你的信箱。</span>';
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
     async function init() {
       try {
@@ -1400,6 +1635,11 @@
           return;
         }
 
+        if (!normalizeEmail(MY_CARD.member && MY_CARD.member.email)) {
+          showRegisterFormForMissingEmail(MY_CARD.member);
+          return;
+        }
+
         await showMemberOrAgreement(MY_CARD);
       } catch (error) {
         showError(error && error.message ? error.message : error);
@@ -1427,12 +1667,18 @@
         memberId: memberId,
         name: document.getElementById("name").value.trim(),
         phone: document.getElementById("phone").value.trim(),
+        email: normalizeEmail(document.getElementById("email").value),
         birthday: year && month && day ? `${year}-${month}-${day}` : "",
         gender: document.getElementById("gender").value
       };
 
-      if (!form.name || !form.phone || !form.gender) {
+      if (!form.name || !form.phone || !form.email || !form.gender) {
         msg.innerHTML = '<span class="error">會員資料未填完整，請重新確認。</span>';
+        return;
+      }
+
+      if (!isValidEmail(form.email)) {
+        msg.innerHTML = '<span class="error">會員資料驗證失敗，請確認電子信箱是否正確。</span>';
         return;
       }
 
