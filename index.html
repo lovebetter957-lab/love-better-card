@@ -75,7 +75,7 @@
     }
 
     /* =====================================================
-       首頁封面：共用底圖與新版機票主視覺
+       首頁封面：保留原飛機 GIF，疊上新版機票主視覺
     ===================================================== */
     .login-cover {
       position: fixed;
@@ -106,25 +106,34 @@
       min-height: 100vh;
       min-height: 100dvh;
       margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      padding: max(28px, env(safe-area-inset-top)) 18px max(34px, env(safe-area-inset-bottom));
     }
 
-    .login-cover-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 28px;
-      padding: 36px 0 100px;
+    .login-cover-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1440 / 2558;
+    }
+
+    .login-cover-animation {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      /* 動畫底部平順接到共用底圖，登入按鈕以上完整保留。 */
+      -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
     }
 
     /* 原始圖為 1082 × 1922；票卡位於 (67, 805)，大小 950 × 615。
        以容器裁去畫布白邊，原圖比例與票卡內的文字都保持不變。 */
     .login-cover-artwork {
-      position: relative;
-      width: 100%;
+      position: absolute;
+      z-index: 7;
+      left: 7.15%;
+      top: 42.4%;
+      width: 85.7%;
       aspect-ratio: 950 / 615;
       overflow: hidden;
       border-radius: 6.53% / 10.09%;
@@ -145,8 +154,15 @@
     }
 
     .login-cover-logo-wrap {
-      width: 174px;
-      margin: 0 auto;
+      position: absolute;
+      z-index: 8;
+      top: 3.5%;
+      left: 4.8%;
+      width: 31%;
+      padding: 7px 9px;
+      border-radius: 12px;
+      background: rgba(239, 123, 169, 0.18);
+      backdrop-filter: blur(2px);
       pointer-events: none;
     }
 
@@ -154,51 +170,38 @@
       display: block;
       width: 100%;
       height: auto;
-      opacity: 1;
-    }
-
-    .login-cover-title {
-      margin: 16px 0 0;
-      color: var(--pink-dark);
-      font-size: 24px;
-      line-height: 1.3;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-align: center;
+      filter: brightness(0) invert(1);
+      opacity: 0.96;
     }
 
     .login-cover-actions {
+      position: absolute;
+      z-index: 20;
+      top: 75%;
+      left: 1.7%;
+      right: 1.7%;
+      height: 8.5%;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 5.6%;
     }
 
     .login-cover-button {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 54px;
+      width: 100%;
+      height: 100%;
       margin: 0;
-      padding: 14px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
+      padding: 0;
+      border: 0;
       border-radius: 999px;
-      color: var(--pink-dark);
-      background: rgba(255, 255, 255, 0.94);
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.4;
-      box-shadow: 0 8px 20px rgba(150, 54, 98, 0.12);
+      background: transparent;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       -webkit-user-select: none;
       user-select: none;
-    }
-
-    .login-cover-button.member {
-      border-color: var(--pink-dark);
-      color: #fff;
-      background: var(--pink-dark);
     }
 
     .login-cover.is-entering .login-cover-button {
@@ -1023,6 +1026,15 @@
   <!-- 首頁封面 -->
   <div id="loginCover" class="login-cover">
     <div class="login-cover-frame">
+      <div class="login-cover-stage">
+      <img
+        class="login-cover-animation"
+        src="./assets/6月29日(3)-2.gif"
+        width="1440"
+        height="2558"
+        fetchpriority="high"
+        alt="LOVE BETTER 關係探索旅程，台灣飛往日本的飛機動畫"
+      >
       <div class="login-cover-logo-wrap" aria-hidden="true">
         <img
           class="login-cover-logo"
@@ -1030,16 +1042,12 @@
           alt=""
         >
       </div>
-      <h1 class="login-cover-title">關係探索旅程</h1>
-
-      <div class="login-cover-content">
         <div class="login-cover-artwork">
           <img
             class="login-cover-image"
             src="./assets/home-flight-v3.png"
             width="1082"
             height="1922"
-            fetchpriority="high"
             alt="LOVE BETTER 關係探索旅程，完成任務獲得日本來回機票代金券"
           >
         </div>
@@ -1049,13 +1057,15 @@
             class="login-cover-button member"
             type="button"
             onclick="enterMemberJourney()"
-          >會員登入</button>
+            aria-label="會員登入"
+          ></button>
 
           <button
             class="login-cover-button staff"
             type="button"
             onclick="enterStaffJourney()"
-          >工作人員登入</button>
+            aria-label="工作人員登入"
+          ></button>
         </div>
       </div>
 
