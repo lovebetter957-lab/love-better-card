@@ -870,6 +870,61 @@
       font-weight: 900;
     }
 
+    .signature-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .signature-help {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .signature-editor {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      background: rgba(50, 39, 44, 0.55);
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+
+    .signature-editor-panel {
+      width: min(720px, 100%);
+      padding: 18px;
+      border-radius: 20px;
+      background: #fffafd;
+      box-shadow: var(--shadow);
+    }
+
+    .signature-editor-panel h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 20px;
+    }
+
+    .signature-editor-pad {
+      margin: 14px auto;
+    }
+
+    .signature-editor-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .signature-editor-actions .btn {
+      flex: 1;
+      margin: 0;
+    }
+
     .signature-canvas {
       display: block;
       width: 100%;
@@ -1336,9 +1391,13 @@
       <div class="signature-box">
         <div class="signature-head">
           <div class="signature-title">會員本人簽名</div>
-          <button class="signature-clear" type="button" onclick="clearSignaturePad()">清除重簽</button>
+          <div class="signature-actions">
+            <button id="signatureOpenButton" class="signature-clear" type="button" onclick="openSignatureEditor()">放大簽名</button>
+            <button class="signature-clear" type="button" onclick="clearSignaturePad()">清除重簽</button>
+          </div>
         </div>
-        <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+        <div id="signatureInlinePad"><canvas id="signatureCanvas" class="signature-canvas"></canvas></div>
+        <p class="signature-help">可直接簽名，或點「放大簽名」在固定欄位中書寫。</p>
       </div>
 
       <button id="agreementSubmitButton" class="btn btn-primary" type="button" onclick="submitAgreement()">
@@ -1357,6 +1416,18 @@
       <div id="staffView" class="hidden staff-panel"></div>
     </section>
   </main>
+
+  <div id="signatureEditor" class="signature-editor hidden" role="dialog" aria-modal="true" aria-labelledby="signatureEditorTitle">
+    <div class="signature-editor-panel">
+      <h2 id="signatureEditorTitle">會員本人簽名</h2>
+      <p class="signature-help">請在白色欄位簽名。完成前，簽名欄會固定在畫面中。</p>
+      <div id="signatureEditorPad" class="signature-editor-pad"></div>
+      <div class="signature-editor-actions">
+        <button class="btn btn-soft" type="button" onclick="clearSignaturePad()">清除重簽</button>
+        <button id="signatureDoneButton" class="btn btn-primary" type="button" onclick="closeSignatureEditor()">完成簽名</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const LIFF_ID = "2010212550-s957LSzk";
@@ -1389,6 +1460,10 @@
     let SIGNATURE_PAD_READY = false;
     let SIGNATURE_DIRTY = false;
     let SIGNATURE_PAD_STATE = null;
+    let SIGNATURE_EDITOR_OPEN = false;
+    let SIGNATURE_SCROLL_SNAPSHOT = null;
+    let SIGNATURE_EDITOR_CANVAS_STYLE = null;
+    let SIGNATURE_EDITOR_FOCUS = null;
     let AGREEMENT_SUBMIT_IN_FLIGHT = false;
     let REGISTER_SUBMIT_IN_FLIGHT = false;
 
@@ -1544,6 +1619,9 @@
     }
 
     function hideAgreementView() {
+      closeSignatureEditor();
+      if (SIGNATURE_PAD_STATE) SIGNATURE_PAD_STATE.end();
+      setSignatureScrollLock(false);
       const view = document.getElementById("agreementView");
       if (view) view.classList.add("hidden");
     }
@@ -1653,7 +1731,7 @@
       document.getElementById("memberView").classList.add("hidden");
       const view = document.getElementById("agreementView");
       view.classList.remove("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!SIGNATURE_EDITOR_OPEN) window.scrollTo({ top: 0, behavior: "smooth" });
 
       requestAnimationFrame(function() {
         initSignaturePad();
@@ -1661,9 +1739,89 @@
     }
 
     function setSignatureScrollLock(locked) {
-      if (document.body) document.body.classList.toggle("is-signing", Boolean(locked));
+      const body = document.body, root = document.documentElement;
+      if (!body) return;
+      const shouldLock = Boolean(locked || SIGNATURE_EDITOR_OPEN);
+      if (shouldLock && !SIGNATURE_SCROLL_SNAPSHOT) {
+        const bodyStyle = {};
+        ["position", "top", "left", "width", "overflow"].forEach(function(key) { bodyStyle[key] = body.style[key]; });
+        SIGNATURE_SCROLL_SNAPSHOT = {
+          x: Number(window.scrollX) || 0, y: Number(window.scrollY) || 0,
+          body: bodyStyle,
+          rootOverflow: root ? root.style.overflow : "",
+          rootScrollBehavior: root ? root.style.scrollBehavior : ""
+        };
+        body.style.position = "fixed";
+        body.style.top = -SIGNATURE_SCROLL_SNAPSHOT.y + "px";
+        body.style.left = -SIGNATURE_SCROLL_SNAPSHOT.x + "px";
+        body.style.width = "100%";
+        body.style.overflow = "hidden";
+        if (root) root.style.overflow = "hidden";
+      }
+      body.classList.toggle("is-signing", shouldLock);
+      if (!shouldLock && SIGNATURE_SCROLL_SNAPSHOT) {
+        const saved = SIGNATURE_SCROLL_SNAPSHOT;
+        SIGNATURE_SCROLL_SNAPSHOT = null;
+        Object.keys(saved.body).forEach(function(key) { body.style[key] = saved.body[key]; });
+        if (root) { root.style.overflow = saved.rootOverflow; root.style.scrollBehavior = "auto"; }
+        window.scrollTo({ left: saved.x, top: saved.y, behavior: "auto" });
+        if (root) root.style.scrollBehavior = saved.rootScrollBehavior;
+      }
     }
 
+    function openSignatureEditor() {
+      if (AGREEMENT_SUBMIT_IN_FLIGHT || SIGNATURE_EDITOR_OPEN) return;
+      initSignaturePad();
+      const state = SIGNATURE_PAD_STATE;
+      if (!state) return;
+      state.end();
+      SIGNATURE_EDITOR_FOCUS = document.activeElement;
+      SIGNATURE_EDITOR_CANVAS_STYLE = { height: state.canvas.style.height, aspectRatio: state.canvas.style.aspectRatio };
+      const aspect = state.width > 0 && state.height > 0 ? state.width / state.height : 1.5;
+      SIGNATURE_EDITOR_OPEN = true;
+      setSignatureScrollLock(true);
+      document.getElementById("signatureEditor").classList.remove("hidden");
+      const holder = document.getElementById("signatureEditorPad");
+      holder.style.width = "min(100%, " + (aspect * 50) + "svh)";
+      state.canvas.style.height = "auto";
+      state.canvas.style.aspectRatio = aspect + "";
+      holder.appendChild(state.canvas);
+      state.resize();
+      document.getElementById("signatureDoneButton").focus({ preventScroll: true });
+    }
+
+    function closeSignatureEditor() {
+      if (!SIGNATURE_EDITOR_OPEN) return;
+      const state = SIGNATURE_PAD_STATE;
+      if (state) {
+        state.end();
+        const saved = SIGNATURE_EDITOR_CANVAS_STYLE;
+        if (saved) { state.canvas.style.height = saved.height; state.canvas.style.aspectRatio = saved.aspectRatio; }
+        document.getElementById("signatureInlinePad").appendChild(state.canvas);
+      }
+      document.getElementById("signatureEditor").classList.add("hidden");
+      SIGNATURE_EDITOR_OPEN = false;
+      SIGNATURE_EDITOR_CANVAS_STYLE = null;
+      setSignatureScrollLock(false);
+      if (state) state.resize();
+      if (SIGNATURE_EDITOR_FOCUS && typeof SIGNATURE_EDITOR_FOCUS.focus === "function") SIGNATURE_EDITOR_FOCUS.focus({ preventScroll: true });
+      SIGNATURE_EDITOR_FOCUS = null;
+    }
+
+    document.addEventListener("touchmove", function(event) {
+      if ((SIGNATURE_EDITOR_OPEN || (SIGNATURE_PAD_STATE && SIGNATURE_PAD_STATE.drawing)) && event.cancelable) event.preventDefault();
+    }, { passive: false, capture: true });
+
+    document.addEventListener("keydown", function(event) {
+      if (!SIGNATURE_EDITOR_OPEN) return;
+      if (event.key === "Escape") { event.preventDefault(); closeSignatureEditor(); }
+      if (event.key === "Tab") {
+        const buttons = Array.from(document.getElementById("signatureEditor").querySelectorAll("button"));
+        const next = (buttons.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length;
+        event.preventDefault();
+        buttons[next].focus({ preventScroll: true });
+      }
+    });
 
     function initSignaturePad() {
       const canvas = document.getElementById("signatureCanvas");
@@ -1741,6 +1899,9 @@
         end(); state.strokes = []; context.clearRect(0, 0, state.width, state.height); styleContext(); SIGNATURE_DIRTY = false;
       };
       if ("PointerEvent" in window) {
+        // Some LINE WebViews still dispatch scroll-producing touch events alongside pointer events.
+        canvas.addEventListener("touchstart", preventScroll, { passive: false });
+        canvas.addEventListener("touchmove", preventScroll, { passive: false });
         canvas.addEventListener("pointerdown", start, { passive: false });
         canvas.addEventListener("pointermove", move, { passive: false });
         canvas.addEventListener("pointerup", end, { passive: false });
@@ -1793,6 +1954,7 @@
       AGREEMENT_SUBMIT_IN_FLIGHT = true;
       document.getElementById("agreementSubmitButton").disabled = true;
       if (SIGNATURE_PAD_STATE) SIGNATURE_PAD_STATE.end();
+      closeSignatureEditor();
 
       try {
         const result = await api("submitAgreement", {
@@ -1843,7 +2005,7 @@
 
     function showRegisterFormForMissingEmail(member) {
       document.getElementById("loading").classList.add("hidden");
-      document.getElementById("agreementView").classList.add("hidden");
+      hideAgreementView();
       document.getElementById("memberView").classList.add("hidden");
       document.getElementById("registerView").classList.remove("hidden");
       fillRegisterForm(member);
@@ -2148,8 +2310,9 @@
         <p class="subtitle">先查詢會員，再選擇適用且尚未完成的任務發放點數。</p>
 
         <div class="field">
-          <div class="field-label">會員編號／合約編號</div>
-          <input id="singleMemberId" placeholder="例如 LBA-0000" autocomplete="off" autocapitalize="characters" oninput="invalidateStaffMemberLookup()">
+          <div class="field-label">會員本名／會員編號（擇一）</div>
+          <input id="singleMemberId" placeholder="例如：王小明 或 LLL-0001" autocomplete="off" autocapitalize="off" oninput="invalidateStaffMemberLookup()">
+          <div class="small">請輸入會員本名或編號；姓名不使用 LINE 暱稱。同名會員請使用編號。</div>
         </div>
         <button id="staffLookupButton" class="btn btn-soft" type="button" onclick="queryStaffMemberTasks()">查詢會員任務</button>
         <div id="singleLookupMsg" class="small" aria-live="polite">請先查詢會員任務。</div>
@@ -2300,15 +2463,26 @@
       }).join("") : "此會員沒有待補送的失敗通知。";
     }
 
+    function normalizeStaffMemberKey(value) {
+      const key = String(value || "").trim();
+      return isValidMemberId(key) ? normalizeMemberId(key) : key;
+    }
+
+    function matchesStaffMemberKey(member, key) {
+      if (!member || !isValidMemberId(member.memberId)) return false;
+      const normalized = normalizeStaffMemberKey(key);
+      return isValidMemberId(normalized)
+        ? normalizeMemberId(member.memberId) === normalized
+        : String(member.realName || member.name || "").trim() === normalized;
+    }
+
     async function queryStaffMemberTasks() {
       if (STAFF_LOOKUP_IN_FLIGHT) return null;
       const msg = document.getElementById("singleLookupMsg");
-      let memberId;
-      try {
-        memberId = requireValidMemberId(document.getElementById("singleMemberId").value);
-      } catch (error) {
+      const memberKey = normalizeStaffMemberKey(document.getElementById("singleMemberId").value);
+      if (!memberKey) {
         invalidateStaffMemberLookup();
-        msg.innerHTML = `<span class="error">${escapeHtml(error.message || MEMBER_ID_ERROR)}</span>`;
+        msg.innerHTML = '<span class="error">請輸入會員本名或會員編號。</span>';
         return null;
       }
       STAFF_LOOKUP_IN_FLIGHT = true;
@@ -2317,19 +2491,21 @@
       updateStaffControls();
       msg.textContent = "正在查詢會員任務…";
       try {
-        const data = await api("getMemberTasksForStaff", { memberKey: memberId });
-        if (epoch !== STAFF_LOOKUP_EPOCH || normalizeMemberId(document.getElementById("singleMemberId").value) !== memberId) {
-          msg.textContent = "會員編號已變更，請重新查詢。";
+        // The backend resolves the unique legal name or member ID; nicknames
+        // and ambiguous legal names are rejected before granting any points.
+        const data = await api("getMemberTasksForStaff", { memberKey: memberKey });
+        if (epoch !== STAFF_LOOKUP_EPOCH || normalizeStaffMemberKey(document.getElementById("singleMemberId").value) !== memberKey) {
+          msg.textContent = "會員本名或編號已變更，請重新查詢。";
           return null;
         }
-        if (!data || !data.member || normalizeMemberId(data.member.memberId) !== memberId) throw new Error("查詢結果與會員編號不一致，請重新查詢。");
+        if (!data || !matchesStaffMemberKey(data.member, memberKey)) throw new Error("查詢結果與會員本名或編號不一致，請重新查詢。");
         STAFF_MEMBER_DATA = data;
         const tasks = getApplicableStaffTasks(data);
         document.getElementById("singleTaskId").innerHTML = '<option value="">請選擇尚未完成的任務</option>' + tasks.map(function(task) {
           return `<option value="${escapeHtml(task.taskId)}" ${task.completed ? "disabled" : ""}>${escapeHtml(task.category || "")}｜${escapeHtml(task.taskName)}（${Number(task.points || 0)} 點${task.completed ? "，已完成" : ""}）</option>`;
         }).join("");
-        const displayName = data.member.realName || data.member.name || memberId;
-        document.getElementById("singleMemberSummary").innerHTML = `<strong>${escapeHtml(displayName)}</strong>｜${escapeHtml(data.member.gender)}<br>目前進度：${Number(data.completedPoints || 0)}/${Number(data.requiredPoints || data.totalPoints || 25)} 點<br>${escapeHtml(getProgressNote(data.remainingPoints, data))}`;
+        const displayName = data.member.realName || data.member.name || data.member.memberId;
+        document.getElementById("singleMemberSummary").innerHTML = `<strong>${escapeHtml(displayName)}</strong>｜${escapeHtml(data.member.gender)}<br>會員編號：${escapeHtml(normalizeMemberId(data.member.memberId))}<br>目前進度：${Number(data.completedPoints || 0)}/${Number(data.requiredPoints || data.totalPoints || 25)} 點<br>${escapeHtml(getProgressNote(data.remainingPoints, data))}`;
         msg.textContent = tasks.some(function(task) { return !task.completed; }) ? "已查詢，請選擇此會員尚未完成的任務。" : "此會員的適用任務皆已完成。";
         renderFailedNotifications(data);
         renderCancelableRecords(data);
@@ -2376,8 +2552,12 @@
       const msg = document.getElementById("singleMsg");
 
       try {
-        const memberId = requireValidMemberId(document.getElementById("singleMemberId").value);
-        if (!STAFF_MEMBER_DATA || normalizeMemberId(STAFF_MEMBER_DATA.member.memberId) !== memberId) throw new Error("請先查詢此會員的適用任務，再發放點數。");
+        const memberKey = normalizeStaffMemberKey(document.getElementById("singleMemberId").value);
+        if (!memberKey) throw new Error("請輸入會員本名或會員編號。");
+        if (!STAFF_MEMBER_DATA || !matchesStaffMemberKey(STAFF_MEMBER_DATA.member, memberKey)) throw new Error("請先查詢此會員的適用任務，再發放點數。");
+        // Send the uniquely resolved ID to prevent later name changes or
+        // newly duplicated names from redirecting this grant to another member.
+        const memberId = requireValidMemberId(STAFF_MEMBER_DATA.member.memberId);
         const taskId = document.getElementById("singleTaskId").value;
         const selectedTask = getApplicableStaffTasks(STAFF_MEMBER_DATA).find(function(task) { return task.taskId === taskId; });
         if (!selectedTask || selectedTask.completed) throw new Error("請選擇此會員尚未完成的適用任務。");
@@ -2401,7 +2581,6 @@
         updateStaffControls();
       }
     }
-
 
     function updateBulkMode() {
       const mode = document.getElementById("bulkMode").value;
