@@ -54,7 +54,6 @@
     }
 
     body.is-signing {
-      overflow: hidden;
       overscroll-behavior: none;
       touch-action: none;
     }
@@ -1153,7 +1152,7 @@
         </select>
       </div>
 
-      <button class="btn btn-primary" type="button" onclick="submitRegister()">
+      <button id="registerSubmitButton" class="btn btn-primary" type="button" onclick="submitRegister()">
         建立會員並獲得 1 點
       </button>
 
@@ -1170,7 +1169,7 @@
       </p>
 
       <div class="agreement-meta">
-        <span class="agreement-pill">版本：2026-09-09-v1</span>
+        <span id="agreementVersionLabel" class="agreement-pill">版本：2026-10-15-v2</span>
         <span class="agreement-pill">日本來回機票集點卡</span>
       </div>
 
@@ -1181,7 +1180,7 @@
           <li>集點卡綁定會員帳號，不得轉讓、借用或與他人合併使用。</li>
           <li>所有任務皆須經 LOVE BETTER 官方認列後始得完成。</li>
           <li>自集點卡核發及註冊成功後，會員所參與之活動與完成之指定任務，始得作為本活動集點認列。</li>
-          <li>本活動自 2026 年 9 月 4 日開始至 2027 年 2 月 28 日或本活動預算用罄止，以時間先至者為準。主辦單位保留隨時修正、暫停、終止或解釋本活動之最終權利。</li>
+          <li>本活動自 2026 年 10 月 15 日開始至 2027 年 2 月 28 日或本活動預算用罄止，以時間先至者為準。主辦單位保留隨時修正、暫停、終止或解釋本活動之最終權利。</li>
         </ol>
 
         <h3>第二條｜集點方式</h3>
@@ -1243,7 +1242,7 @@
         <p>未完成活動簽到、未完成指定流程、未完成指定消費、活動臨時取消未到場、活動中途離場、排約未完成或臨時取消、同一合作店家重複消費、使用他人會員資格、提供不實資料、冒名參加活動、取得集點卡前所參與之活動及完成之任務，或其他經 LOVE BETTER 認定不符合活動資格之情形，均不列入任務完成紀錄。</p>
 
         <h3>第十條｜點數取消情形</h3>
-        <p>如有冒名參與、偽造資料、重複認列、惡意利用系統漏洞、不當取得活動資格、違反會員規範、代簽或代為參與活動，或經官方查證有影響活動公平性之行為，LOVE BETTER 有權取消已認列之點數及獎勵資格。如已兌換獎勵，LOVE BETTER 得取消其資格並要求返還獎勵；如行為已觸法，將依法追究。</p>
+        <p>LOVE BETTER 有權取消已認列之點數及獎勵資格,包括但不限於如會員有冒名參與、偽造資料、重複認列、惡意利用系統漏洞、不當取得活動資格、違反會員規範、代簽或代為參與活動、經官方查證有影響活動公平性之行為。如已兌換獎勵，LOVE BETTER得取消其資格並要求返還獎勵，如行為已觸法者 LOVE BETTER 將依法追究。</p>
 
         <h3>第十一條｜活動異動</h3>
         <p>若因天災、疫情、政府法令、合作店家終止合作、活動取消、系統異常或其他不可抗力因素，導致任務無法完成或活動無法正常進行，LOVE BETTER 保留調整活動內容、任務內容、合作店家、點數認列方式及提供等值替代任務或獎勵之權利。本活動辦法若有未盡事宜，主辦單位保留補充修改之權利，所有更動皆以本活動集點網站公告為準，不另行通知。</p>
@@ -1342,7 +1341,7 @@
         <canvas id="signatureCanvas" class="signature-canvas"></canvas>
       </div>
 
-      <button class="btn btn-primary" type="button" onclick="submitAgreement()">
+      <button id="agreementSubmitButton" class="btn btn-primary" type="button" onclick="submitAgreement()">
         同意並進入會員集點卡
       </button>
 
@@ -1366,21 +1365,32 @@
       "STA", "STB", "STG",
       "MTA", "MTB",
       "CTA", "CTB", "CTG",
-      "XYA", "XYB", "XYG"
+      "XYA", "XYB", "XYG", "LLL"
     ];
+    const FEMALE_MEMBER_ID_PREFIXES = new Set(["LBG", "STG", "CTG", "XYG"]);
     const MEMBER_ID_ERROR = "會員資料驗證失敗，請確認會員編號是否正確。";
 
     let ACCESS_TOKEN = "";
     let MY_CARD = null;
     let STAFF_DATA = null;
     let MEMBER_REFRESH_IN_FLIGHT = null;
+    let MEMBER_DATA_EPOCH = 0;
+    let MEMBER_REFRESH_EPOCH = -1;
     let STAFF_MEMBER_DATA = null;
     let STAFF_LOOKUP_IN_FLIGHT = false;
     let STAFF_GRANT_IN_FLIGHT = false;
+    let STAFF_BULK_IN_FLIGHT = false;
+    let STAFF_CANCEL_IN_FLIGHT = false;
+    let STAFF_LOOKUP_EPOCH = 0;
+    let STAFF_HISTORY_IN_FLIGHT = false;
+    let STAFF_NOTIFICATION_HISTORY = [];
     const STAFF_RESEND_IN_FLIGHT = new Set();
     let AGREEMENT_DELIVERY_RESULT = null;
     let SIGNATURE_PAD_READY = false;
     let SIGNATURE_DIRTY = false;
+    let SIGNATURE_PAD_STATE = null;
+    let AGREEMENT_SUBMIT_IN_FLIGHT = false;
+    let REGISTER_SUBMIT_IN_FLIGHT = false;
 
     function setLoading(message) {
       const loading = document.getElementById("loading");
@@ -1444,6 +1454,15 @@
       return memberId;
     }
 
+    function getMemberIdGender(value) {
+      const memberId = requireValidMemberId(value);
+      return FEMALE_MEMBER_ID_PREFIXES.has(memberId.split("-")[0]) ? "女" : "男";
+    }
+
+    function requireMemberGender(memberId, gender) {
+      if (getMemberIdGender(memberId) !== gender) throw new Error("性別有誤，請確認");
+    }
+
     function normalizeEmail(value) {
       return String(value || "").trim().toLowerCase();
     }
@@ -1503,29 +1522,26 @@
       monthSelect.addEventListener("change", renderDays);
     }
 
+
     async function api(action, payload = {}) {
-      const response = await fetch("/api/gas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          action: action,
-          accessToken: ACCESS_TOKEN,
-          payload: payload
-        })
-      });
-
-      const result = await response.json();
-
-      if (!result.ok) {
-        throw new Error(result.error || "API 發生錯誤");
-      }
-
-      return result.data;
+      const controller = new AbortController();
+      const writes = new Set(["registerMember", "submitAgreement", "grantTaskToMember", "bulkGrantTask", "resendPointNotification", "cancelMemberTask"]);
+      const timeout = setTimeout(function() { controller.abort(); }, writes.has(action) ? 120000 : 45000);
+      try {
+        const response = await fetch("/api/gas", {
+          method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+          body: JSON.stringify({ action: action, accessToken: ACCESS_TOKEN, payload: payload })
+        });
+        const result = await response.json();
+        if (!result.ok) throw new Error(result.error || "API 發生錯誤");
+        return result.data;
+      } catch (error) {
+        if (error && error.name === "AbortError") throw new Error(writes.has(action)
+          ? "處理逾時，請先更新會員或通知紀錄確認結果，避免重複送出。"
+          : "資料讀取逾時，請再按一次更新。");
+        throw error;
+      } finally { clearTimeout(timeout); }
     }
-
-
 
     function hideAgreementView() {
       const view = document.getElementById("agreementView");
@@ -1548,6 +1564,7 @@
     }
 
     function setAgreementFullText(agreement) {
+      if (agreement && agreement.agreementVersion) document.getElementById("agreementVersionLabel").textContent = "版本：" + agreement.agreementVersion;
       if (!agreement || typeof agreement.agreementText !== "string" || !agreement.agreementText.trim()) return;
       document.getElementById("agreementScroll").innerHTML = agreement.agreementText.split(/\r?\n/).map(function(line) {
         if (!line.trim()) return '<p aria-hidden="true"><br></p>';
@@ -1557,7 +1574,12 @@
     }
 
     async function refreshMemberProgress(options = {}) {
-      if (MEMBER_REFRESH_IN_FLIGHT) return MEMBER_REFRESH_IN_FLIGHT;
+      if (MEMBER_REFRESH_IN_FLIGHT) {
+        const pending = MEMBER_REFRESH_IN_FLIGHT;
+        if (!options.force && MEMBER_REFRESH_EPOCH === MEMBER_DATA_EPOCH) return pending;
+        await pending;
+        return refreshMemberProgress({ ...options, force: false });
+      }
       const memberView = document.getElementById("memberView");
       const wasVisible = !memberView.classList.contains("hidden");
       const coverVisible = !document.getElementById("loginCover").classList.contains("is-hidden");
@@ -1570,12 +1592,16 @@
         button.textContent = "更新中…";
       }
       MEMBER_REFRESH_IN_FLIGHT = (async function() {
+        const epoch = MEMBER_DATA_EPOCH;
+        MEMBER_REFRESH_EPOCH = epoch;
         try {
           const updated = await api("getMyCard");
+          if (epoch !== MEMBER_DATA_EPOCH) return null;
           if (!updated || !updated.registered || normalizeMemberId(updated.member && updated.member.memberId) !== currentMemberId) {
             throw new Error("會員資料暫時無法確認，請稍後再更新進度。");
           }
           const agreement = await api("checkAgreement");
+          if (epoch !== MEMBER_DATA_EPOCH) return null;
           setAgreementFullText(agreement);
           MY_CARD = updated;
           if (!options.preserveView || wasVisible) {
@@ -1635,117 +1661,120 @@
     }
 
     function setSignatureScrollLock(locked) {
-      document.body.classList.toggle("is-signing", Boolean(locked));
+      if (document.body) document.body.classList.toggle("is-signing", Boolean(locked));
     }
+
 
     function initSignaturePad() {
       const canvas = document.getElementById("signatureCanvas");
       if (!canvas) return;
-
+      if (SIGNATURE_PAD_STATE && SIGNATURE_PAD_STATE.canvas === canvas) {
+        SIGNATURE_PAD_STATE.resize();
+        return;
+      }
       const context = canvas.getContext("2d");
-      let drawing = false;
-      let lastX = 0;
-      let lastY = 0;
+      const state = { canvas: canvas, drawing: false, pointerId: null, strokes: [], width: 0, height: 0, ratio: 0, resizeTimer: null, pendingResize: false };
+      SIGNATURE_PAD_STATE = state;
 
-      function prepareContext() {
-        const rect = canvas.getBoundingClientRect();
-        const width = Math.max(Math.round(rect.width), 280);
-        const height = Math.max(Math.round(rect.height), 220);
-        const ratio = window.devicePixelRatio || 1;
-
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        canvas.style.height = height + "px";
-
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        context.clearRect(0, 0, width, height);
+      function styleContext() {
+        context.setTransform(state.ratio, 0, 0, state.ratio, 0, 0);
         context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, width, height);
+        context.fillRect(0, 0, state.width, state.height);
         context.lineWidth = 3.2;
-        context.lineCap = "round";
-        context.lineJoin = "round";
-        context.strokeStyle = "#3c3036";
-        SIGNATURE_DIRTY = false;
+        context.lineCap = "round"; context.lineJoin = "round"; context.strokeStyle = "#3c3036";
       }
-
-      function blockTouch(event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      function pointFromEvent(event) {
-        const rect = canvas.getBoundingClientRect();
-        return {
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top
-        };
-      }
-
-      function start(event) {
-        blockTouch(event);
-        const point = pointFromEvent(event);
-        drawing = true;
-        setSignatureScrollLock(true);
-        lastX = point.x;
-        lastY = point.y;
+      function segment(from, to) {
+        // Draw only the new segment. Restroking the entire growing path stalls long Android signatures.
         context.beginPath();
-        context.moveTo(lastX, lastY);
-
-        try {
-          canvas.setPointerCapture(event.pointerId);
-        } catch (error) {}
-      }
-
-      function move(event) {
-        if (!drawing) return;
-        blockTouch(event);
-        const point = pointFromEvent(event);
-        context.lineTo(point.x, point.y);
+        context.moveTo(from.x * state.width, from.y * state.height);
+        context.lineTo(to.x * state.width, to.y * state.height);
         context.stroke();
-        lastX = point.x;
-        lastY = point.y;
-        SIGNATURE_DIRTY = true;
       }
-
+      function resize() {
+        if (state.drawing) { state.pendingResize = true; return; }
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const width = Math.round(rect.width), height = Math.round(rect.height);
+        const ratio = Math.min(Math.max(Number(window.devicePixelRatio) || 1, 1), 2);
+        if (state.width === width && state.height === height && state.ratio === ratio) return;
+        state.width = width; state.height = height; state.ratio = ratio;
+        canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+        styleContext();
+        state.strokes.forEach(function(stroke) {
+          stroke.forEach(function(point, index) { segment(index ? stroke[index - 1] : point, point); });
+        });
+        state.pendingResize = false;
+      }
+      state.resize = resize;
+      function preventScroll(event) { if (event.cancelable) event.preventDefault(); }
+      function point(event) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+      }
+      function start(event) {
+        if (AGREEMENT_SUBMIT_IN_FLIGHT || state.drawing || (event.button != null && event.button !== 0)) return;
+        preventScroll(event);
+        state.drawing = true; state.pointerId = event.pointerId;
+        state.strokes.push([point(event)]);
+        segment(state.strokes[state.strokes.length - 1][0], state.strokes[state.strokes.length - 1][0]);
+        setSignatureScrollLock(true);
+        if (event.pointerId != null) { try { canvas.setPointerCapture(event.pointerId); } catch (error) {} }
+      }
+      function move(event) {
+        if (!state.drawing || (state.pointerId != null && event.pointerId !== state.pointerId)) return;
+        preventScroll(event);
+        const stroke = state.strokes[state.strokes.length - 1], next = point(event), previous = stroke[stroke.length - 1];
+        if (Math.hypot((next.x - previous.x) * state.width, (next.y - previous.y) * state.height) < 0.6) return;
+        stroke.push(next); segment(previous, next); SIGNATURE_DIRTY = true;
+      }
       function end(event) {
-        if (!drawing) return;
-        blockTouch(event);
-        drawing = false;
+        if (!state.drawing || (event && event.pointerId != null && event.pointerId !== state.pointerId)) return;
+        if (event) preventScroll(event);
+        const pointerId = state.pointerId;
+        state.drawing = false; state.pointerId = null;
         setSignatureScrollLock(false);
-
-        try {
-          canvas.releasePointerCapture(event.pointerId);
-        } catch (error) {}
+        if (pointerId != null) { try { canvas.releasePointerCapture(pointerId); } catch (error) {} }
+        if (state.pendingResize) resize();
       }
-
-      if (!SIGNATURE_PAD_READY) {
+      state.end = end;
+      state.clear = function() {
+        end(); state.strokes = []; context.clearRect(0, 0, state.width, state.height); styleContext(); SIGNATURE_DIRTY = false;
+      };
+      if ("PointerEvent" in window) {
         canvas.addEventListener("pointerdown", start, { passive: false });
         canvas.addEventListener("pointermove", move, { passive: false });
         canvas.addEventListener("pointerup", end, { passive: false });
         canvas.addEventListener("pointercancel", end, { passive: false });
-        canvas.addEventListener("pointerleave", end, { passive: false });
-        canvas.addEventListener("touchstart", blockTouch, { passive: false });
-        canvas.addEventListener("touchmove", blockTouch, { passive: false });
-        SIGNATURE_PAD_READY = true;
+        canvas.addEventListener("lostpointercapture", end);
+      } else {
+        function touchPoint(event) {
+          const touch = event.changedTouches && event.changedTouches[0];
+          if (!touch) return null;
+          return { clientX: touch.clientX, clientY: touch.clientY, pointerId: touch.identifier, cancelable: event.cancelable, preventDefault: function() { event.preventDefault(); } };
+        }
+        canvas.addEventListener("touchstart", function(event) { const p = touchPoint(event); if (p) start(p); }, { passive: false });
+        canvas.addEventListener("touchmove", function(event) { const p = touchPoint(event); if (p) move(p); }, { passive: false });
+        canvas.addEventListener("touchend", function(event) { const p = touchPoint(event); if (p) end(p); }, { passive: false });
+        canvas.addEventListener("touchcancel", end, { passive: false });
+        canvas.addEventListener("mousedown", start); window.addEventListener("mousemove", move); window.addEventListener("mouseup", end);
       }
-
-      prepareContext();
+      window.addEventListener("blur", function() { end(); });
+      document.addEventListener("visibilitychange", function() { if (document.hidden) end(); });
+      window.addEventListener("resize", function() { clearTimeout(state.resizeTimer); state.resizeTimer = setTimeout(resize, 120); });
+      if (typeof ResizeObserver !== "undefined") { state.observer = new ResizeObserver(resize); state.observer.observe(canvas); }
+      SIGNATURE_PAD_READY = true;
+      resize();
     }
 
     function clearSignaturePad() {
-      const canvas = document.getElementById("signatureCanvas");
-      if (!canvas) return;
-
-      const context = canvas.getContext("2d");
-      const rect = canvas.getBoundingClientRect();
-      context.clearRect(0, 0, rect.width, rect.height);
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, rect.width, rect.height);
-      SIGNATURE_DIRTY = false;
+      if (AGREEMENT_SUBMIT_IN_FLIGHT) return;
+      if (!SIGNATURE_PAD_STATE) initSignaturePad();
+      if (SIGNATURE_PAD_STATE) SIGNATURE_PAD_STATE.clear();
       setSignatureScrollLock(false);
     }
 
     async function submitAgreement() {
+      if (AGREEMENT_SUBMIT_IN_FLIGHT) return;
       const msg = document.getElementById("agreementMsg");
       const accepted = document.getElementById("agreementAccepted").checked;
       const canvas = document.getElementById("signatureCanvas");
@@ -1761,6 +1790,9 @@
       }
 
       msg.textContent = "正在建立同意紀錄、PDF 檔並寄送至 Email...";
+      AGREEMENT_SUBMIT_IN_FLIGHT = true;
+      document.getElementById("agreementSubmitButton").disabled = true;
+      if (SIGNATURE_PAD_STATE) SIGNATURE_PAD_STATE.end();
 
       try {
         const result = await api("submitAgreement", {
@@ -1775,6 +1807,10 @@
         await showMemberOrAgreement(MY_CARD);
       } catch (error) {
         msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
+      } finally {
+        AGREEMENT_SUBMIT_IN_FLIGHT = false;
+        document.getElementById("agreementSubmitButton").disabled = false;
+        setSignatureScrollLock(false);
       }
     }
 
@@ -1868,6 +1904,7 @@
     }
 
     async function submitRegister() {
+      if (REGISTER_SUBMIT_IN_FLIGHT) return;
       const msg = document.getElementById("registerMsg");
       msg.textContent = "送出中...";
 
@@ -1903,12 +1940,20 @@
         return;
       }
 
+      try { requireMemberGender(memberId, form.gender); }
+      catch (error) { msg.innerHTML = `<span class="error">${escapeHtml(error.message)}</span>`; return; }
+
       try {
+        REGISTER_SUBMIT_IN_FLIGHT = true;
+        document.getElementById("registerSubmitButton").disabled = true;
         MY_CARD = await api("registerMember", form);
         document.getElementById("registerView").classList.add("hidden");
         await showMemberOrAgreement(MY_CARD);
       } catch (error) {
         msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
+      } finally {
+        REGISTER_SUBMIT_IN_FLIGHT = false;
+        document.getElementById("registerSubmitButton").disabled = false;
       }
     }
 
@@ -2130,21 +2175,30 @@
           <div id="notificationRetryMsg" class="small" aria-live="polite"></div>
         </div>
 
+        <div id="pointCancellationSection" class="hidden">
+          <h3 class="section-title">取消誤發點數</h3>
+          <p class="small">取消後會更新有效點數，並傳送調整後圖卡與說明訊息給此會員。</p>
+          <div class="field"><div class="field-label">要取消的完成紀錄</div><select id="cancelRecordId"><option value="">請先查詢會員</option></select></div>
+          <div class="field"><div class="field-label">調整原因／備註</div><textarea id="cancelNote" placeholder="例如：活動誤發"></textarea></div>
+          <button id="cancelPointButton" class="btn btn-soft" type="button" onclick="cancelStaffMemberTask()">取消此筆點數並通知會員</button>
+          <div id="cancelPointMsg" class="small" aria-live="polite"></div>
+        </div>
+
         <div class="divider"></div>
 
         <h2 class="section-title">集體發放</h2>
 
         <div class="field">
           <div class="field-label">發放模式</div>
-          <select id="bulkMode">
-            <option value="all">全部會員</option>
+          <select id="bulkMode" onchange="updateBulkMode()">
+            <option value="ids">輸入本名／會員編號發放</option>
+            <option value="all">全部會員（驗證所選性別）</option>
             <option value="gender">依性別發放</option>
-            <option value="ids">貼上會員編號批量發放</option>
           </select>
         </div>
 
         <div class="field">
-          <div class="field-label">性別篩選</div>
+          <div class="field-label">本次發放性別</div>
           <select id="bulkGender">
             <option value="男">男</option>
             <option value="女">女</option>
@@ -2152,8 +2206,9 @@
         </div>
 
         <div class="field">
-          <div class="field-label">會員編號批量輸入</div>
-          <textarea id="bulkMemberIds" placeholder="例如 LBA-0001、LBB-0002，可用逗號或換行分隔"></textarea>
+          <div class="field-label">會員本名／編號批量輸入</div>
+          <textarea id="bulkMemberIds" placeholder="例如：王小明、LLL-0001，一行一位或以逗號分隔"></textarea>
+          <div class="small">可混用本名及編號；整份名單全部正確才會發放。姓名不可使用 LINE 暱稱。</div>
         </div>
 
         <div class="field">
@@ -2166,9 +2221,19 @@
           <textarea id="bulkNote" placeholder="例如：年度活動集體完成"></textarea>
         </div>
 
-        <button class="btn btn-dark" type="button" onclick="grantBulk()">集體發放點數</button>
-        <div id="bulkMsg" class="small"></div>
+        <button id="bulkGrantButton" class="btn btn-dark" type="button" onclick="grantBulk()">集體發放點數</button>
+        <div id="bulkMsg" class="small" aria-live="polite"></div>
+
+        <div class="divider"></div>
+        <h2 class="section-title">圖卡與通知紀錄</h2>
+        <p class="small">查看會員、任務、此次及累計點數、通知狀態與實際圖卡。</p>
+        <div class="field"><div class="field-label">會員本名／編號（留空查看最近紀錄）</div><input id="historyMemberKey" placeholder="會員本名或 LLL-0001"></div>
+        <button id="notificationHistoryButton" class="btn btn-soft" type="button" onclick="loadStaffNotificationHistory()">更新通知紀錄</button>
+        <div id="notificationHistoryMsg" class="small" aria-live="polite"></div>
+        <div id="notificationHistoryList" class="small"></div>
       `;
+      renderStaffNotificationHistory(STAFF_DATA.notificationHistory || []);
+      updateBulkMode();
     }
 
     function getApplicableStaffTasks(data) {
@@ -2182,23 +2247,36 @@
 
     function updateStaffControls() {
       const hasAvailable = getApplicableStaffTasks(STAFF_MEMBER_DATA).some(function(task) { return !task.completed; });
-      const busy = STAFF_LOOKUP_IN_FLIGHT || STAFF_GRANT_IN_FLIGHT;
+      const busy = STAFF_LOOKUP_IN_FLIGHT || STAFF_GRANT_IN_FLIGHT || STAFF_BULK_IN_FLIGHT || STAFF_CANCEL_IN_FLIGHT;
       const lookup = document.getElementById("staffLookupButton");
       const grant = document.getElementById("singleGrantButton");
       const memberId = document.getElementById("singleMemberId");
       const select = document.getElementById("singleTaskId");
       if (lookup) lookup.disabled = busy;
       if (grant) grant.disabled = busy || !hasAvailable;
-      if (memberId) memberId.readOnly = STAFF_GRANT_IN_FLIGHT;
+      if (memberId) memberId.readOnly = busy;
       if (select) select.disabled = busy || !hasAvailable;
+      ["bulkGrantButton", "bulkMode", "bulkGender", "bulkTaskId", "cancelRecordId"].forEach(function(id) {
+        const control = document.getElementById(id); if (control) control.disabled = busy;
+      });
+      const cancelButton = document.getElementById("cancelPointButton");
+      const canCancel = STAFF_MEMBER_DATA && (STAFF_MEMBER_DATA.records || []).some(function(record) { return record.recordId && (!record.status || String(record.status).toLowerCase() === "active"); });
+      if (cancelButton) cancelButton.disabled = busy || !canCancel;
+      ["bulkMemberIds", "bulkNote", "singleNote", "cancelNote"].forEach(function(id) {
+        const control = document.getElementById(id); if (control) control.readOnly = busy;
+      });
+      const bulkButton = document.getElementById("bulkGrantButton");
+      if (bulkButton) bulkButton.textContent = STAFF_BULK_IN_FLIGHT ? "正在驗證及發放…" : "集體發放點數";
     }
 
     function invalidateStaffMemberLookup() {
+      STAFF_LOOKUP_EPOCH++;
       STAFF_MEMBER_DATA = null;
       document.getElementById("singleTaskId").innerHTML = '<option value="">請先查詢會員任務</option>';
       document.getElementById("singleMemberSummary").textContent = "";
       document.getElementById("singleLookupMsg").textContent = "請先查詢會員任務。";
       document.getElementById("notificationRetrySection").classList.add("hidden");
+      document.getElementById("pointCancellationSection").classList.add("hidden");
       updateStaffControls();
     }
 
@@ -2234,12 +2312,13 @@
         return null;
       }
       STAFF_LOOKUP_IN_FLIGHT = true;
+      const epoch = ++STAFF_LOOKUP_EPOCH;
       STAFF_MEMBER_DATA = null;
       updateStaffControls();
       msg.textContent = "正在查詢會員任務…";
       try {
         const data = await api("getMemberTasksForStaff", { memberKey: memberId });
-        if (normalizeMemberId(document.getElementById("singleMemberId").value) !== memberId) {
+        if (epoch !== STAFF_LOOKUP_EPOCH || normalizeMemberId(document.getElementById("singleMemberId").value) !== memberId) {
           msg.textContent = "會員編號已變更，請重新查詢。";
           return null;
         }
@@ -2249,10 +2328,12 @@
         document.getElementById("singleTaskId").innerHTML = '<option value="">請選擇尚未完成的任務</option>' + tasks.map(function(task) {
           return `<option value="${escapeHtml(task.taskId)}" ${task.completed ? "disabled" : ""}>${escapeHtml(task.category || "")}｜${escapeHtml(task.taskName)}（${Number(task.points || 0)} 點${task.completed ? "，已完成" : ""}）</option>`;
         }).join("");
-        const displayName = data.member.displayName || data.member.lineName || data.member.name || memberId;
+        const displayName = data.member.realName || data.member.name || memberId;
         document.getElementById("singleMemberSummary").innerHTML = `<strong>${escapeHtml(displayName)}</strong>｜${escapeHtml(data.member.gender)}<br>目前進度：${Number(data.completedPoints || 0)}/${Number(data.requiredPoints || data.totalPoints || 25)} 點<br>${escapeHtml(getProgressNote(data.remainingPoints, data))}`;
         msg.textContent = tasks.some(function(task) { return !task.completed; }) ? "已查詢，請選擇此會員尚未完成的任務。" : "此會員的適用任務皆已完成。";
         renderFailedNotifications(data);
+        renderCancelableRecords(data);
+        if (data.notificationHistory) renderStaffNotificationHistory(data.notificationHistory);
         return data;
       } catch (error) {
         invalidateStaffMemberLookup();
@@ -2291,7 +2372,7 @@
     }
 
     async function grantSingle() {
-      if (STAFF_GRANT_IN_FLIGHT) return;
+      if (STAFF_GRANT_IN_FLIGHT || STAFF_BULK_IN_FLIGHT || STAFF_CANCEL_IN_FLIGHT || STAFF_LOOKUP_IN_FLIGHT) return;
       const msg = document.getElementById("singleMsg");
 
       try {
@@ -2309,10 +2390,10 @@
           taskId: taskId,
           note: document.getElementById("singleNote").value.trim()
         });
-
-        msg.innerHTML = `<span class="success">${escapeHtml(result.message)}</span>`;
+        MEMBER_DATA_EPOCH++;
+        msg.innerHTML = `<span class="${result.success === false ? "error" : "success"}">${escapeHtml(result.message)}${result.queued ? "<br>點數已發放，圖卡通知排隊中；可繼續發放下一筆。" : ""}</span>`;
         await queryStaffMemberTasks();
-        if (MY_CARD && MY_CARD.registered && normalizeMemberId(MY_CARD.member.memberId) === memberId) await refreshMemberProgress({ preserveView: true });
+        if (MY_CARD && MY_CARD.registered && normalizeMemberId(MY_CARD.member.memberId) === memberId) await refreshMemberProgress({ preserveView: true, force: true });
       } catch (error) {
         msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       } finally {
@@ -2321,50 +2402,169 @@
       }
     }
 
-    async function grantBulk() {
-      const msg = document.getElementById("bulkMsg");
-      msg.textContent = "集體發放中...";
 
-      try {
-        const mode = document.getElementById("bulkMode").value;
-        let memberIds = document.getElementById("bulkMemberIds").value;
+    function updateBulkMode() {
+      const mode = document.getElementById("bulkMode").value;
+      const field = document.getElementById("bulkMemberIds");
+      if (field) field.placeholder = mode === "ids" ? "例如：王小明、LLL-0001，一行一位或以逗號分隔" : "依性別／全部模式請留空；指定名單請改選本名／編號發放";
+    }
 
-        if (mode === "ids") {
-          const ids = memberIds
-            .split(/\n|,|，|\s/)
-            .map(normalizeMemberId)
-            .filter(Boolean);
+    function parseBulkMemberKeys(value) {
+      return String(value || "").split(/[\n\r,，、;；]+/).map(function(key) { return key.trim(); }).filter(Boolean);
+    }
 
-          if (!ids.length) {
-            throw new Error("請輸入會員編號");
-          }
-
-          ids.forEach(requireValidMemberId);
-          memberIds = ids.join("\n");
-        }
-
-        const result = await api("bulkGrantTask", {
-          mode: mode,
-          gender: document.getElementById("bulkGender").value,
-          memberIds: memberIds,
-          taskId: document.getElementById("bulkTaskId").value,
-          note: document.getElementById("bulkNote").value.trim()
-        });
-
-        msg.innerHTML = `
-          <span class="success">
-            發放完成<br>
-            新增點數：${result.addedCount} 筆<br>
-            已完成略過：${result.skippedCount} 筆<br>
-            LINE 圖卡已送出：${result.pushSuccessCount} 筆<br>
-            LINE 圖卡失敗：${result.pushFailCount} 筆
-          </span>
-        `;
-        if (STAFF_MEMBER_DATA) await queryStaffMemberTasks();
-        if (MY_CARD && MY_CARD.registered) await refreshMemberProgress({ preserveView: true });
-      } catch (error) {
-        msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
+    function validateBulkPayload(payload, staffData) {
+      if (!["ids", "gender", "all"].includes(payload.mode)) throw new Error("請選擇正確的發放模式。");
+      if (!["男", "女"].includes(payload.gender)) throw new Error("批量輸入有誤，請確認性別或是查詢此編號是否正確");
+      const task = (staffData.tasks || []).find(function(item) { return item.taskId === payload.taskId; });
+      const taskGender = task && String(task.gender || "").trim();
+      if (!task || (taskGender !== payload.gender && taskGender !== "全部" && taskGender.toUpperCase() !== "ALL")) throw new Error("任務內容填寫有誤，請確認任務內容");
+      const keys = parseBulkMemberKeys(payload.memberIds);
+      if (payload.mode !== "ids") {
+        if (keys.length) throw new Error("已填寫會員名單，請改選「輸入本名／會員編號發放」，避免發給名單外會員。");
+        return;
       }
+      if (!keys.length) throw new Error("請輸入會員本名或會員編號。");
+      if (!Array.isArray(staffData.members)) throw new Error("會員名單尚未讀取，請重新開啟工作人員後台。");
+      const members = staffData.members.filter(function(member) { return String(member.status || "").toLowerCase() !== "disabled"; });
+      const errors = [];
+      keys.forEach(function(key) {
+        const matches = members.filter(function(member) {
+          return isValidMemberId(key) ? normalizeMemberId(member.memberId) === normalizeMemberId(key) : String(member.realName || member.name || "").trim() === key;
+        });
+        if (!matches.length) errors.push("無(" + key + ")此會員請核對");
+        else if (matches.length > 1) errors.push("姓名(" + key + ")對應多位會員，請改用會員編號。");
+        else if (String(matches[0].gender || "").trim() !== payload.gender) errors.push("批量輸入有誤，請確認性別或是查詢此編號是否正確（" + key + "）");
+      });
+      if (errors.length) throw new Error(errors.join("\n"));
+    }
+
+    function renderBulkResult(result) {
+      const details = Array.isArray(result.results) ? result.results : [];
+      const queued = Number(result.queuedCount || 0);
+      const summary = '<div class="success">點數處理完成<br>新增點數：' + Number(result.addedCount || 0) + ' 筆<br>已完成略過：' + Number(result.skippedCount || 0) + ' 筆<br>LINE 圖卡已送出：' + Number(result.pushSuccessCount || 0) + ' 筆<br>圖卡排隊中：' + queued + ' 筆<br>LINE 圖卡失敗：' + Number(result.pushFailCount || 0) + ' 筆</div>';
+      return summary + (queued ? '<p>點數已發放，排隊中的圖卡將自動送出；可繼續發放下一筆。</p>' : "") + details.map(function(item) {
+        const added = item.status === "added" || item.status === "granted" || item.added;
+        const skipped = item.status === "skipped" || (!added && item.status !== "failed");
+        const status = added ? "已發放" : skipped ? "已略過" : "失敗";
+        const notification = item.notificationStatus === "pending" || item.queued ? "圖卡排隊中" : item.notificationStatus === "sent" ? "圖卡已送出" : item.notificationStatus === "failed" ? "圖卡失敗，可補送" : "";
+        return '<div class="field"><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>（' + escapeHtml(item.memberId) + '）<br>' + escapeHtml(item.taskName || item.taskId || "") + '｜' + status + (added && item.completedPoints != null ? '｜累計 ' + Number(item.completedPoints) + ' 點' : '') + '<br>' + escapeHtml(item.reason || item.error || "") + (notification ? '<br>' + notification : '') + '</div>';
+      }).join("");
+    }
+
+    async function grantBulk() {
+      if (STAFF_BULK_IN_FLIGHT || STAFF_GRANT_IN_FLIGHT || STAFF_CANCEL_IN_FLIGHT || STAFF_LOOKUP_IN_FLIGHT) return;
+      const msg = document.getElementById("bulkMsg");
+      const payload = {
+        mode: document.getElementById("bulkMode").value,
+        gender: document.getElementById("bulkGender").value,
+        memberIds: document.getElementById("bulkMemberIds").value.trim(),
+        taskId: document.getElementById("bulkTaskId").value,
+        note: document.getElementById("bulkNote").value.trim()
+      };
+      try {
+        // Refresh the roster, then validate the whole list before any point write or push.
+        STAFF_BULK_IN_FLIGHT = true; updateStaffControls();
+        msg.textContent = "正在驗證整份名單…";
+        STAFF_DATA = await api("getStaffPanelData");
+        validateBulkPayload(payload, STAFF_DATA);
+        msg.textContent = "名單驗證完成，正在發放…";
+        const result = await api("bulkGrantTask", payload);
+        MEMBER_DATA_EPOCH++;
+        msg.innerHTML = renderBulkResult(result);
+        if (STAFF_MEMBER_DATA) await queryStaffMemberTasks();
+        if (MY_CARD && MY_CARD.registered) await refreshMemberProgress({ preserveView: true, force: true });
+        if (result.notificationHistory) renderStaffNotificationHistory(result.notificationHistory);
+      } catch (error) {
+        msg.innerHTML = '<span class="error" style="white-space:pre-line">' + escapeHtml(error && error.message ? error.message : error) + '</span>';
+      } finally {
+        STAFF_BULK_IN_FLIGHT = false; updateStaffControls();
+      }
+    }
+
+    function renderCancelableRecords(data) {
+      const section = document.getElementById("pointCancellationSection");
+      const select = document.getElementById("cancelRecordId");
+      if (!section || !select) return;
+      const records = (data.records || []).filter(function(record) { return record.recordId && (!record.status || String(record.status).toLowerCase() === "active"); });
+      section.classList.remove("hidden");
+      select.innerHTML = '<option value="">' + (records.length ? '請選擇要取消的紀錄' : '目前沒有可取消的完成紀錄') + '</option>' + records.map(function(record) {
+        return '<option value="' + escapeHtml(record.recordId) + '">' + escapeHtml(record.taskName || record.taskId) + '（' + Number(record.points || 0) + ' 點）｜' + escapeHtml(formatNotificationDate(record.createdAt)) + '</option>';
+      }).join("");
+    }
+
+    async function cancelStaffMemberTask() {
+      if (STAFF_CANCEL_IN_FLIGHT || STAFF_GRANT_IN_FLIGHT || STAFF_BULK_IN_FLIGHT || STAFF_LOOKUP_IN_FLIGHT) return;
+      const msg = document.getElementById("cancelPointMsg");
+      const recordId = document.getElementById("cancelRecordId").value;
+      const record = STAFF_MEMBER_DATA && (STAFF_MEMBER_DATA.records || []).find(function(item) { return item.recordId === recordId && (!item.status || String(item.status).toLowerCase() === "active"); });
+      if (!record) { msg.innerHTML = '<span class="error">請先查詢會員並選擇有效的完成紀錄。</span>'; return; }
+      try {
+        STAFF_CANCEL_IN_FLIGHT = true; updateStaffControls();
+        msg.textContent = "正在取消此筆點數並處理通知…";
+        const result = await api("cancelMemberTask", { recordId: recordId, note: document.getElementById("cancelNote").value.trim() });
+        MEMBER_DATA_EPOCH++;
+        msg.innerHTML = '<span class="' + (result.success === false ? 'error' : 'success') + '">' + escapeHtml(result.message || "已取消此筆點數。") + (result.queued ? '<br>調整圖卡與文字通知排隊中。' : '') + '</span>';
+        await queryStaffMemberTasks();
+        if (MY_CARD && MY_CARD.registered && MY_CARD.member.memberId === record.memberId) await refreshMemberProgress({ preserveView: true, force: true });
+        await loadStaffNotificationHistory();
+      } catch (error) {
+        msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>';
+      } finally { STAFF_CANCEL_IN_FLIGHT = false; updateStaffControls(); }
+    }
+
+    function formatNotificationDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false });
+    }
+
+    function safeNotificationImageUrl(value) {
+      try { const url = new URL(String(value || "")); return url.protocol === "https:" ? url.href : ""; } catch (error) { return ""; }
+    }
+
+    function renderStaffNotificationHistory(input) {
+      const list = document.getElementById("notificationHistoryList");
+      if (!list) return;
+      const notifications = Array.isArray(input) ? input : input && input.notifications || [];
+      STAFF_NOTIFICATION_HISTORY = notifications;
+      const statuses = { sent: "已送出", failed: "發送失敗", pending: "排隊中", sending: "傳送中", legacy: "舊紀錄未保存圖卡" };
+      list.innerHTML = notifications.length ? notifications.map(function(item) {
+        const imageUrl = safeNotificationImageUrl(item.imageUrl);
+        const cancelled = item.type === "cancellation" || item.type === "cancel";
+        const canResend = item.notificationStatus === "failed" && item.recordId && (cancelled || !item.status || String(item.status).toLowerCase() === "active");
+        const messages = (item.messages || []).filter(function(message) { return message && message.type === "text"; }).map(function(message) { return '<p style="white-space:pre-wrap">' + escapeHtml(message.text) + '</p>'; }).join("");
+        const resend = canResend ? '<button class="btn btn-soft" type="button" ' + (STAFF_RESEND_IN_FLIGHT.has(item.recordId) ? 'disabled ' : '') + 'onclick="resendHistoryNotification(\'' + escapeHtml(escapeJsString(item.recordId)) + '\',\'' + escapeHtml(escapeJsString(item.notificationId || "")) + '\')">只補送此通知，不更動點數</button>' : '';
+        return '<details class="field"><summary><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>｜' + escapeHtml(item.taskName || "任務通知") + '｜' + escapeHtml(statuses[item.notificationStatus] || item.notificationStatus || "尚未發送") + '</summary><div>' + escapeHtml(item.memberId) + '｜' + escapeHtml(formatNotificationDate(item.createdAt)) + '<br>' + (cancelled ? '點數調整' : '本次 +' + Number(item.points || 0) + ' 點') + '｜累計 ' + Number(item.completedPoints || 0) + '/' + Number(item.totalPoints || 25) + ' 點' + (imageUrl ? '<p><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(imageUrl) + '" alt="實際發送圖卡" loading="lazy" style="display:block;width:280px;max-width:100%;height:auto;border-radius:16px"></a></p>' : '<p>此筆圖卡尚未生成或未保存。</p>') + messages + (item.notificationError ? '<p class="error">' + escapeHtml(item.notificationError) + '</p>' : '') + resend + '</div></details>';
+      }).join("") : "目前沒有通知紀錄。";
+    }
+
+    async function loadStaffNotificationHistory() {
+      if (STAFF_HISTORY_IN_FLIGHT) return;
+      const msg = document.getElementById("notificationHistoryMsg"), button = document.getElementById("notificationHistoryButton");
+      try {
+        STAFF_HISTORY_IN_FLIGHT = true; if (button) button.disabled = true;
+        msg.textContent = "正在讀取圖卡與通知紀錄…";
+        const data = await api("getStaffNotificationHistory", { memberKey: document.getElementById("historyMemberKey").value.trim(), limit: 50 });
+        renderStaffNotificationHistory(data); msg.textContent = "通知紀錄已更新。";
+      } catch (error) { msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>'; }
+      finally { STAFF_HISTORY_IN_FLIGHT = false; if (button) button.disabled = false; }
+    }
+
+    async function resendHistoryNotification(recordId, notificationId) {
+      if (STAFF_RESEND_IN_FLIGHT.has(recordId)) return;
+      const item = STAFF_NOTIFICATION_HISTORY.find(function(record) { return record.recordId === recordId && (!notificationId || record.notificationId === notificationId) && record.notificationStatus === "failed" && (record.type === "cancel" || record.type === "cancellation" || !record.status || String(record.status).toLowerCase() === "active"); });
+      const msg = document.getElementById("notificationHistoryMsg");
+      if (!item) { msg.innerHTML = '<span class="error">請先更新通知紀錄。</span>'; return; }
+      try {
+        STAFF_RESEND_IN_FLIGHT.add(recordId); renderStaffNotificationHistory(STAFF_NOTIFICATION_HISTORY);
+        const payload = { recordId: recordId };
+        if (notificationId) payload.notificationId = notificationId;
+        const result = await api("resendPointNotification", payload);
+        await loadStaffNotificationHistory();
+        msg.innerHTML = '<span class="' + (result.success === false ? 'error' : 'success') + '">' + escapeHtml(result.message || "通知補送完成，點數不變。") + '</span>';
+      } catch (error) { msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>'; }
+      finally { STAFF_RESEND_IN_FLIGHT.delete(recordId); renderStaffNotificationHistory(STAFF_NOTIFICATION_HISTORY); }
     }
 
     let COVER_ENTERING = false;
