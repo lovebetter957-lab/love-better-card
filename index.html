@@ -2699,7 +2699,24 @@
     }
 
     function safeNotificationImageUrl(value) {
-      try { const url = new URL(String(value || "")); return url.protocol === "https:" ? url.href : ""; } catch (error) { return ""; }
+      try {
+        const url = new URL(String(value || ""));
+        if (url.protocol !== "https:") return "";
+        // Drive blocks external image embedding. Existing saved notifications
+        // use the same approved image endpoint as newly generated cards.
+        if (url.hostname === "drive.google.com" && url.pathname === "/uc" && url.searchParams.get("export") === "view") {
+          const fileId = url.searchParams.get("id") || "";
+          return /^[A-Za-z0-9_-]{20,128}$/.test(fileId) ? "/api/card-image?fileId=" + encodeURIComponent(fileId) : "";
+        }
+        return url.href;
+      } catch (error) { return ""; }
+    }
+
+    function showNotificationImageError(image) {
+      if (!image) return;
+      image.style.display = "none";
+      const fallback = image.parentElement && image.parentElement.nextElementSibling;
+      if (fallback) fallback.hidden = false;
     }
 
     function renderStaffNotificationHistory(input) {
@@ -2714,7 +2731,7 @@
         const canResend = item.notificationStatus === "failed" && item.recordId && (cancelled || !item.status || String(item.status).toLowerCase() === "active");
         const messages = (item.messages || []).filter(function(message) { return message && message.type === "text"; }).map(function(message) { return '<p style="white-space:pre-wrap">' + escapeHtml(message.text) + '</p>'; }).join("");
         const resend = canResend ? '<button class="btn btn-soft" type="button" ' + (STAFF_RESEND_IN_FLIGHT.has(item.recordId) ? 'disabled ' : '') + 'onclick="resendHistoryNotification(\'' + escapeHtml(escapeJsString(item.recordId)) + '\',\'' + escapeHtml(escapeJsString(item.notificationId || "")) + '\')">只補送此通知，不更動點數</button>' : '';
-        return '<details class="field"><summary><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>｜' + escapeHtml(item.taskName || "任務通知") + '｜' + escapeHtml(statuses[item.notificationStatus] || item.notificationStatus || "尚未發送") + '</summary><div>' + escapeHtml(item.memberId) + '｜' + escapeHtml(formatNotificationDate(item.createdAt)) + '<br>' + (cancelled ? '點數調整' : '本次 +' + Number(item.points || 0) + ' 點') + '｜累計 ' + Number(item.completedPoints || 0) + '/' + Number(item.totalPoints || 25) + ' 點' + (imageUrl ? '<p><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(imageUrl) + '" alt="實際發送圖卡" loading="lazy" style="display:block;width:280px;max-width:100%;height:auto;border-radius:16px"></a></p>' : '<p>此筆圖卡尚未生成或未保存。</p>') + messages + (item.notificationError ? '<p class="error">' + escapeHtml(item.notificationError) + '</p>' : '') + resend + '</div></details>';
+        return '<details class="field"><summary><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>｜' + escapeHtml(item.taskName || "任務通知") + '｜' + escapeHtml(statuses[item.notificationStatus] || item.notificationStatus || "尚未發送") + '</summary><div>' + escapeHtml(item.memberId) + '｜' + escapeHtml(formatNotificationDate(item.createdAt)) + '<br>' + (cancelled ? '點數調整' : '本次 +' + Number(item.points || 0) + ' 點') + '｜累計 ' + Number(item.completedPoints || 0) + '/' + Number(item.totalPoints || 25) + ' 點' + (imageUrl ? '<p><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(imageUrl) + '" alt="實際發送圖卡" loading="lazy" onerror="showNotificationImageError(this)" style="display:block;width:280px;max-width:100%;height:auto;border-radius:16px"></a><span class="error" hidden>圖卡讀取失敗，請開啟圖卡查看。</span><br><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener">開啟圖卡</a></p>' : '<p>此筆圖卡尚未生成或未保存。</p>') + messages + (item.notificationError ? '<p class="error">' + escapeHtml(item.notificationError) + '</p>' : '') + resend + '</div></details>';
       }).join("") : "目前沒有通知紀錄。";
     }
 
