@@ -2577,12 +2577,13 @@
         // Send the uniquely resolved ID to prevent later name changes or
         // newly duplicated names from redirecting this grant to another member.
         const memberId = requireValidMemberId(STAFF_MEMBER_DATA.member.memberId);
+        const memberIdentity = Object.assign({}, STAFF_MEMBER_DATA.member);
         const taskId = document.getElementById("singleTaskId").value;
         const selectedTask = getApplicableStaffTasks(STAFF_MEMBER_DATA).find(function(task) { return task.taskId === taskId; });
         if (!selectedTask || selectedTask.completed) throw new Error("請選擇此會員尚未完成的適用任務。");
         STAFF_GRANT_IN_FLIGHT = true;
         updateStaffControls();
-        msg.textContent = "發放中...";
+        msg.textContent = "正在登錄點數…";
 
         const result = await api("grantTaskToMember", {
           memberId: memberId,
@@ -2591,8 +2592,9 @@
         });
         MEMBER_DATA_EPOCH++;
         msg.innerHTML = `<span class="${result.success === false ? "error" : "success"}">${escapeHtml(result.message)}${result.queued ? "<br>點數已發放，圖卡通知排隊中；可繼續發放下一筆。" : ""}</span>`;
-        await queryStaffMemberTasks();
-        if (MY_CARD && MY_CARD.registered && normalizeMemberId(MY_CARD.member.memberId) === memberId) await refreshMemberProgress({ preserveView: true, force: true });
+        STAFF_GRANT_IN_FLIGHT = false; updateStaffControls();
+        if (matchesStaffMemberKey(memberIdentity, document.getElementById("singleMemberId").value)) void queryStaffMemberTasks({ background: true });
+        if (MY_CARD && MY_CARD.registered && normalizeMemberId(MY_CARD.member.memberId) === memberId) void refreshMemberProgress({ preserveView: true, force: true });
       } catch (error) {
         msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
       } finally {
@@ -2753,10 +2755,11 @@
         note: document.getElementById("bulkNote").value.trim()
       };
       try {
-        // Refresh the roster, then validate the whole list before any point write or push.
+        // Reuse the loaded roster for local checks. The write endpoint still
+        // validates the entire batch against fresh data before any point write.
         STAFF_BULK_IN_FLIGHT = true; updateStaffControls();
         msg.textContent = "正在驗證整份名單…";
-        STAFF_DATA = await api("getStaffPanelData");
+        if (!STAFF_DATA || !Array.isArray(STAFF_DATA.members) || !Array.isArray(STAFF_DATA.tasks)) STAFF_DATA = await api("getStaffPanelData");
         validateBulkPayload(payload, STAFF_DATA);
         msg.textContent = "名單驗證完成，正在登錄點數…";
         const result = await api("bulkGrantTask", payload);
@@ -2795,17 +2798,24 @@
       const msg = document.getElementById("cancelPointMsg");
       const recordId = document.getElementById("cancelRecordId").value;
       const record = STAFF_MEMBER_DATA && (STAFF_MEMBER_DATA.records || []).find(function(item) { return item.recordId === recordId && (!item.status || String(item.status).toLowerCase() === "active"); });
-      if (!record) { msg.innerHTML = '<span class="error">請先查詢會員並選擇有效的完成紀錄。</span>'; return; }
+      const memberIdentity = STAFF_MEMBER_DATA && STAFF_MEMBER_DATA.member;
+      if (!record || !memberIdentity || !matchesStaffMemberKey(memberIdentity, document.getElementById("singleMemberId").value) || normalizeMemberId(record.memberId) !== normalizeMemberId(memberIdentity.memberId)) { msg.innerHTML = '<span class="error">請先查詢會員並選擇有效的完成紀錄。</span>'; return; }
       try {
         stopStaffNotificationPolling();
         STAFF_CANCEL_IN_FLIGHT = true; updateStaffControls();
-        msg.textContent = "正在取消此筆點數並處理通知…";
+        msg.textContent = "正在登錄點數調整…";
         const result = await api("cancelMemberTask", { recordId: recordId, note: document.getElementById("cancelNote").value.trim() });
         MEMBER_DATA_EPOCH++;
         msg.innerHTML = '<span class="' + (result.success === false ? 'error' : 'success') + '">' + escapeHtml(result.message || "已取消此筆點數。") + (result.queued ? '<br>調整圖卡與文字通知排隊中。' : '') + '</span>';
-        await queryStaffMemberTasks();
-        if (MY_CARD && MY_CARD.registered && MY_CARD.member.memberId === record.memberId) await refreshMemberProgress({ preserveView: true, force: true });
-        await loadStaffNotificationHistory();
+        if (result.success !== false) {
+          record.status = "cancelled";
+          document.getElementById("cancelRecordId").value = "";
+          renderCancelableRecords(STAFF_MEMBER_DATA);
+        }
+        STAFF_CANCEL_IN_FLIGHT = false; updateStaffControls();
+        if (matchesStaffMemberKey(memberIdentity, document.getElementById("singleMemberId").value)) void queryStaffMemberTasks({ background: true });
+        if (MY_CARD && MY_CARD.registered && normalizeMemberId(MY_CARD.member.memberId) === normalizeMemberId(record.memberId)) void refreshMemberProgress({ preserveView: true, force: true });
+        void loadStaffNotificationHistory();
       } catch (error) {
         msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>';
       } finally { STAFF_CANCEL_IN_FLIGHT = false; updateStaffControls(); }
