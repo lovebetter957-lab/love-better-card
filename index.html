@@ -1448,13 +1448,17 @@
     let MEMBER_DATA_EPOCH = 0;
     let MEMBER_REFRESH_EPOCH = -1;
     let STAFF_MEMBER_DATA = null;
+    let STAFF_MEMBER_LOOKUP_IDENTITY = null;
     let STAFF_LOOKUP_IN_FLIGHT = false;
     let STAFF_GRANT_IN_FLIGHT = false;
     let STAFF_BULK_IN_FLIGHT = false;
     let STAFF_CANCEL_IN_FLIGHT = false;
     let STAFF_LOOKUP_EPOCH = 0;
     let STAFF_HISTORY_IN_FLIGHT = false;
+    let STAFF_HISTORY_REQUEST_EPOCH = 0;
     let STAFF_NOTIFICATION_HISTORY = [];
+    let STAFF_NOTIFICATION_POLL = null;
+    let STAFF_BULK_RESULT_EPOCH = 0;
     const STAFF_RESEND_IN_FLIGHT = new Set();
     let AGREEMENT_DELIVERY_RESULT = null;
     let SIGNATURE_PAD_READY = false;
@@ -1706,8 +1710,10 @@
     }
 
     document.addEventListener("visibilitychange", function() {
-      if (!document.hidden) refreshMemberProgress({ automatic: true });
+      if (document.hidden) stopStaffNotificationPolling();
+      else refreshMemberProgress({ automatic: true });
     });
+    window.addEventListener("pagehide", stopStaffNotificationPolling);
     window.addEventListener("pageshow", function(event) {
       if (event.persisted) refreshMemberProgress({ automatic: true });
     });
@@ -2281,6 +2287,8 @@
     }
 
     async function openStaffPanel() {
+      stopStaffNotificationPolling();
+      STAFF_HISTORY_REQUEST_EPOCH++;
       const staffView = document.getElementById("staffView");
       staffView.classList.remove("hidden");
       staffView.innerHTML = '<div class="small">工作人員資料讀取中...</div>';
@@ -2298,8 +2306,12 @@
     }
 
     function renderStaffPanel() {
+      stopStaffNotificationPolling();
+      STAFF_HISTORY_REQUEST_EPOCH++;
       const staffView = document.getElementById("staffView");
       STAFF_MEMBER_DATA = null;
+      STAFF_MEMBER_LOOKUP_IDENTITY = null;
+      STAFF_LOOKUP_EPOCH++;
 
       const taskOptions = STAFF_DATA.tasks.map(function(task) {
         return `<option value="${escapeHtml(task.taskId)}">${escapeHtml(task.gender)}｜${escapeHtml(task.category)}｜${escapeHtml(task.taskName)}</option>`;
@@ -2390,7 +2402,7 @@
         <div class="divider"></div>
         <h2 class="section-title">圖卡與通知紀錄</h2>
         <p class="small">查看會員、任務、此次及累計點數、通知狀態與實際圖卡。</p>
-        <div class="field"><div class="field-label">會員本名／編號（留空查看最近紀錄）</div><input id="historyMemberKey" placeholder="會員本名或 LLL-0001"></div>
+        <div class="field"><div class="field-label">會員本名／編號（留空查看最近紀錄）</div><input id="historyMemberKey" placeholder="會員本名或 LLL-0001" oninput="onStaffHistoryFilterChanged()"></div>
         <button id="notificationHistoryButton" class="btn btn-soft" type="button" onclick="loadStaffNotificationHistory()">更新通知紀錄</button>
         <div id="notificationHistoryMsg" class="small" aria-live="polite"></div>
         <div id="notificationHistoryList" class="small"></div>
@@ -2435,6 +2447,7 @@
     function invalidateStaffMemberLookup() {
       STAFF_LOOKUP_EPOCH++;
       STAFF_MEMBER_DATA = null;
+      STAFF_MEMBER_LOOKUP_IDENTITY = null;
       document.getElementById("singleTaskId").innerHTML = '<option value="">請先查詢會員任務</option>';
       document.getElementById("singleMemberSummary").textContent = "";
       document.getElementById("singleLookupMsg").textContent = "請先查詢會員任務。";
@@ -2476,8 +2489,9 @@
         : String(member.realName || member.name || "").trim() === normalized;
     }
 
-    async function queryStaffMemberTasks() {
+    async function queryStaffMemberTasks(options = {}) {
       if (STAFF_LOOKUP_IN_FLIGHT) return null;
+      const background = options.background === true;
       const msg = document.getElementById("singleLookupMsg");
       const memberKey = normalizeStaffMemberKey(document.getElementById("singleMemberId").value);
       if (!memberKey) {
@@ -2485,8 +2499,9 @@
         msg.innerHTML = '<span class="error">請輸入會員本名或會員編號。</span>';
         return null;
       }
-      STAFF_LOOKUP_IN_FLIGHT = true;
+      if (!background) STAFF_LOOKUP_IN_FLIGHT = true;
       const epoch = ++STAFF_LOOKUP_EPOCH;
+      const memberEpoch = MEMBER_DATA_EPOCH;
       STAFF_MEMBER_DATA = null;
       updateStaffControls();
       msg.textContent = "正在查詢會員任務…";
@@ -2494,12 +2509,13 @@
         // The backend resolves the unique legal name or member ID; nicknames
         // and ambiguous legal names are rejected before granting any points.
         const data = await api("getMemberTasksForStaff", { memberKey: memberKey });
-        if (epoch !== STAFF_LOOKUP_EPOCH || normalizeStaffMemberKey(document.getElementById("singleMemberId").value) !== memberKey) {
-          msg.textContent = "會員本名或編號已變更，請重新查詢。";
+        if (epoch !== STAFF_LOOKUP_EPOCH || memberEpoch !== MEMBER_DATA_EPOCH || normalizeStaffMemberKey(document.getElementById("singleMemberId").value) !== memberKey) {
+          if (!background) msg.textContent = "會員本名或編號已變更，請重新查詢。";
           return null;
         }
         if (!data || !matchesStaffMemberKey(data.member, memberKey)) throw new Error("查詢結果與會員本名或編號不一致，請重新查詢。");
         STAFF_MEMBER_DATA = data;
+        STAFF_MEMBER_LOOKUP_IDENTITY = { memberId: data.member.memberId, realName: data.member.realName || data.member.name };
         const tasks = getApplicableStaffTasks(data);
         document.getElementById("singleTaskId").innerHTML = '<option value="">請選擇尚未完成的任務</option>' + tasks.map(function(task) {
           return `<option value="${escapeHtml(task.taskId)}" ${task.completed ? "disabled" : ""}>${escapeHtml(task.category || "")}｜${escapeHtml(task.taskName)}（${Number(task.points || 0)} 點${task.completed ? "，已完成" : ""}）</option>`;
@@ -2509,14 +2525,15 @@
         msg.textContent = tasks.some(function(task) { return !task.completed; }) ? "已查詢，請選擇此會員尚未完成的任務。" : "此會員的適用任務皆已完成。";
         renderFailedNotifications(data);
         renderCancelableRecords(data);
-        if (data.notificationHistory) renderStaffNotificationHistory(data.notificationHistory);
+        if (!background && data.notificationHistory) renderStaffNotificationHistory(data.notificationHistory);
         return data;
       } catch (error) {
+        if (background && (epoch !== STAFF_LOOKUP_EPOCH || memberEpoch !== MEMBER_DATA_EPOCH)) return null;
         invalidateStaffMemberLookup();
         msg.innerHTML = `<span class="error">${escapeHtml(error && error.message ? error.message : error)}</span>`;
         return null;
       } finally {
-        STAFF_LOOKUP_IN_FLIGHT = false;
+        if (!background) STAFF_LOOKUP_IN_FLIGHT = false;
         updateStaffControls();
       }
     }
@@ -2532,6 +2549,7 @@
       }
       STAFF_RESEND_IN_FLIGHT.add(recordId);
       const button = document.getElementById("resendNotificationButton-" + recordId);
+      stopStaffNotificationPolling();
       if (button) button.disabled = true;
       msg.textContent = "正在補送通知，不會再次加點…";
       try {
@@ -2552,6 +2570,7 @@
       const msg = document.getElementById("singleMsg");
 
       try {
+        stopStaffNotificationPolling();
         const memberKey = normalizeStaffMemberKey(document.getElementById("singleMemberId").value);
         if (!memberKey) throw new Error("請輸入會員本名或會員編號。");
         if (!STAFF_MEMBER_DATA || !matchesStaffMemberKey(STAFF_MEMBER_DATA.member, memberKey)) throw new Error("請先查詢此會員的適用任務，再發放點數。");
@@ -2622,18 +2641,110 @@
       const details = Array.isArray(result.results) ? result.results : [];
       const queued = Number(result.queuedCount || 0);
       const summary = '<div class="success">點數處理完成<br>新增點數：' + Number(result.addedCount || 0) + ' 筆<br>已完成略過：' + Number(result.skippedCount || 0) + ' 筆<br>LINE 圖卡已送出：' + Number(result.pushSuccessCount || 0) + ' 筆<br>圖卡排隊中：' + queued + ' 筆<br>LINE 圖卡失敗：' + Number(result.pushFailCount || 0) + ' 筆</div>';
-      return summary + (queued ? '<p>點數已發放，排隊中的圖卡將自動送出；可繼續發放下一筆。</p>' : "") + details.map(function(item) {
+      return summary + (queued ? '<p>點數已登錄；圖卡自動發送中。可繼續發放下一筆，不必按更新通知紀錄才會寄送。</p>' : "") + details.map(function(item) {
         const added = item.status === "added" || item.status === "granted" || item.added;
         const skipped = item.status === "skipped" || (!added && item.status !== "failed");
-        const status = added ? "已發放" : skipped ? "已略過" : "失敗";
-        const notification = item.notificationStatus === "pending" || item.queued ? "圖卡排隊中" : item.notificationStatus === "sent" ? "圖卡已送出" : item.notificationStatus === "failed" ? "圖卡失敗，可補送" : "";
-        return '<div class="field"><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>（' + escapeHtml(item.memberId) + '）<br>' + escapeHtml(item.taskName || item.taskId || "") + '｜' + status + (added && item.completedPoints != null ? '｜累計 ' + Number(item.completedPoints) + ' 點' : '') + '<br>' + escapeHtml(item.reason || item.error || "") + (notification ? '<br>' + notification : '') + '</div>';
+        const status = added ? "點數已登錄" : skipped ? "已略過" : "失敗";
+        const notification = item.notificationStatus === "sent" ? "圖卡已送出" : item.notificationStatus === "failed" ? "圖卡發送失敗，可補送" : item.notificationStatus === "sending" ? "圖卡傳送中" : item.notificationStatus === "pending" || item.queued ? "圖卡排隊中" : "";
+        return '<div class="field"><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>（' + escapeHtml(item.memberId) + '）<br>' + escapeHtml(item.taskName || item.taskId || "") + '｜' + status + (added && item.completedPoints != null ? '｜累計 ' + Number(item.completedPoints) + ' 點' : '') + '<br>' + escapeHtml(item.reason || item.error || "") + (item.reason && item.error ? '<br>' + escapeHtml(item.error) : '') + (notification ? '<br>' + notification : '') + '</div>';
       }).join("");
+    }
+
+    function stopStaffNotificationPolling() {
+      if (!STAFF_NOTIFICATION_POLL) return;
+      clearTimeout(STAFF_NOTIFICATION_POLL.timer);
+      clearTimeout(STAFF_NOTIFICATION_POLL.deadlineTimer);
+      STAFF_NOTIFICATION_POLL = null;
+    }
+
+    function onStaffHistoryFilterChanged() {
+      stopStaffNotificationPolling();
+      STAFF_HISTORY_REQUEST_EPOCH++;
+    }
+
+    function startStaffNotificationPolling(result, bulkEpoch, historyEpoch) {
+      stopStaffNotificationPolling();
+      const details = (result.results || []).map(function(item) { return Object.assign({}, item); });
+      const recordIds = new Set(details.filter(function(item) {
+        return item.recordId && (item.added || item.status === "added" || item.status === "granted") &&
+          (item.queued || item.notificationStatus === "pending" || item.notificationStatus === "sending");
+      }).map(function(item) { return item.recordId; }));
+      if (!recordIds.size || document.hidden) return;
+      const state = {
+        recordIds: recordIds, result: Object.assign({}, result, { results: details }),
+        bulkEpoch: bulkEpoch, historyEpoch: historyEpoch, expiresAt: Date.now() + 120000,
+        filter: document.getElementById("historyMemberKey").value.trim(),
+        view: document.getElementById("staffView"), message: document.getElementById("bulkMsg")
+      };
+      STAFF_NOTIFICATION_POLL = state;
+      state.deadlineTimer = setTimeout(function() {
+        if (STAFF_NOTIFICATION_POLL !== state) return;
+        stopStaffNotificationPolling();
+        state.message.innerHTML += '<p>自動查詢已結束，排隊通知仍會在後台自動發送。「更新通知紀錄」僅查看狀態，不會觸發寄送。</p>';
+      }, 120000);
+      state.timer = setTimeout(function() { void pollStaffNotifications(state); }, 10000);
+    }
+
+    async function pollStaffNotifications(state) {
+      function isCurrent() {
+        return STAFF_NOTIFICATION_POLL === state && state.bulkEpoch === STAFF_BULK_RESULT_EPOCH &&
+          state.historyEpoch === STAFF_HISTORY_REQUEST_EPOCH && !document.hidden && Date.now() < state.expiresAt &&
+          document.getElementById("staffView") === state.view && !state.view.classList.contains("hidden") &&
+          document.getElementById("bulkMsg") === state.message && document.getElementById("historyMemberKey").value.trim() === state.filter;
+      }
+      if (!isCurrent()) { if (STAFF_NOTIFICATION_POLL === state) stopStaffNotificationPolling(); return; }
+      clearTimeout(state.timer);
+      state.timer = null;
+      if (STAFF_HISTORY_IN_FLIGHT) {
+        state.timer = setTimeout(function() { void pollStaffNotifications(state); }, 10000);
+        return;
+      }
+      const button = document.getElementById("notificationHistoryButton");
+      const msg = document.getElementById("notificationHistoryMsg");
+      STAFF_HISTORY_IN_FLIGHT = true;
+      if (button) button.disabled = true;
+      try {
+        // This is a read only: only this batch's record IDs affect its result.
+        const data = await api("getStaffNotificationHistory", { memberKey: "", limit: 200 });
+        if (!isCurrent()) return;
+        const notifications = data.notifications || [];
+        state.result.results.forEach(function(item) {
+          if (!state.recordIds.has(item.recordId)) return;
+          const history = notifications.find(function(record) {
+            return record.recordId === item.recordId && record.type !== "cancel" && record.type !== "cancellation";
+          });
+          if (!history) return;
+          item.notificationStatus = history.notificationStatus;
+          item.queued = history.notificationStatus === "pending" || history.notificationStatus === "sending";
+          item.error = history.notificationError || "";
+          item.reason = history.notificationStatus === "failed" ? "點數已登錄，LINE通知失敗，可補送且不再加點" : item.queued ? "點數已登錄，圖卡自動發送中" : "點數已登錄";
+        });
+        const added = state.result.results.filter(function(item) { return item.added || item.status === "added" || item.status === "granted"; });
+        state.result.queuedCount = added.filter(function(item) { return item.notificationStatus === "pending" || item.notificationStatus === "sending"; }).length;
+        state.result.pushSuccessCount = added.filter(function(item) { return item.notificationStatus === "sent"; }).length;
+        state.result.pushFailCount = added.filter(function(item) { return item.notificationStatus === "failed"; }).length;
+        state.message.innerHTML = renderBulkResult(state.result);
+        if (!state.filter) renderStaffNotificationHistory(data);
+        msg.textContent = "本次通知狀態已自動更新；圖卡由後台自動發送。";
+        if (!state.result.results.some(function(item) { return state.recordIds.has(item.recordId) && item.queued; })) stopStaffNotificationPolling();
+      } catch (error) {
+        if (isCurrent()) msg.innerHTML = '<span class="error">通知狀態讀取失敗：' + escapeHtml(error && error.message ? error.message : error) + '</span><br>點數已登錄，排隊通知仍會在後台自動發送。';
+      } finally {
+        STAFF_HISTORY_IN_FLIGHT = false;
+        if (document.getElementById("notificationHistoryButton") === button && button) button.disabled = false;
+        if (isCurrent()) {
+          clearTimeout(state.timer);
+          state.timer = setTimeout(function() { void pollStaffNotifications(state); }, 10000);
+        }
+      }
     }
 
     async function grantBulk() {
       if (STAFF_BULK_IN_FLIGHT || STAFF_GRANT_IN_FLIGHT || STAFF_CANCEL_IN_FLIGHT || STAFF_LOOKUP_IN_FLIGHT) return;
       const msg = document.getElementById("bulkMsg");
+      stopStaffNotificationPolling();
+      const bulkEpoch = ++STAFF_BULK_RESULT_EPOCH;
+      const historyEpoch = STAFF_HISTORY_REQUEST_EPOCH;
       const payload = {
         mode: document.getElementById("bulkMode").value,
         gender: document.getElementById("bulkGender").value,
@@ -2647,13 +2758,20 @@
         msg.textContent = "正在驗證整份名單…";
         STAFF_DATA = await api("getStaffPanelData");
         validateBulkPayload(payload, STAFF_DATA);
-        msg.textContent = "名單驗證完成，正在發放…";
+        msg.textContent = "名單驗證完成，正在登錄點數…";
         const result = await api("bulkGrantTask", payload);
         MEMBER_DATA_EPOCH++;
         msg.innerHTML = renderBulkResult(result);
-        if (STAFF_MEMBER_DATA) await queryStaffMemberTasks();
-        if (MY_CARD && MY_CARD.registered) await refreshMemberProgress({ preserveView: true, force: true });
-        if (result.notificationHistory) renderStaffNotificationHistory(result.notificationHistory);
+        // Saving points is complete. Read-only progress refreshes must not
+        // keep the next grant locked while image rendering continues.
+        STAFF_BULK_IN_FLIGHT = false; updateStaffControls();
+        if (result.notificationHistory && historyEpoch === STAFF_HISTORY_REQUEST_EPOCH && !document.getElementById("historyMemberKey").value.trim()) renderStaffNotificationHistory(result.notificationHistory);
+        startStaffNotificationPolling(result, bulkEpoch, historyEpoch);
+        // Preserve the last successfully resolved identity while a background
+        // read temporarily clears its task data. A second grant needs a fresh
+        // read too, but an unqueried or changed name must never start one.
+        if (STAFF_MEMBER_LOOKUP_IDENTITY && matchesStaffMemberKey(STAFF_MEMBER_LOOKUP_IDENTITY, document.getElementById("singleMemberId").value)) void queryStaffMemberTasks({ background: true });
+        if (MY_CARD && MY_CARD.registered) void refreshMemberProgress({ preserveView: true, force: true });
       } catch (error) {
         msg.innerHTML = '<span class="error" style="white-space:pre-line">' + escapeHtml(error && error.message ? error.message : error) + '</span>';
       } finally {
@@ -2679,6 +2797,7 @@
       const record = STAFF_MEMBER_DATA && (STAFF_MEMBER_DATA.records || []).find(function(item) { return item.recordId === recordId && (!item.status || String(item.status).toLowerCase() === "active"); });
       if (!record) { msg.innerHTML = '<span class="error">請先查詢會員並選擇有效的完成紀錄。</span>'; return; }
       try {
+        stopStaffNotificationPolling();
         STAFF_CANCEL_IN_FLIGHT = true; updateStaffControls();
         msg.textContent = "正在取消此筆點數並處理通知…";
         const result = await api("cancelMemberTask", { recordId: recordId, note: document.getElementById("cancelNote").value.trim() });
@@ -2736,14 +2855,18 @@
     }
 
     async function loadStaffNotificationHistory() {
+      stopStaffNotificationPolling();
+      const epoch = ++STAFF_HISTORY_REQUEST_EPOCH;
       if (STAFF_HISTORY_IN_FLIGHT) return;
       const msg = document.getElementById("notificationHistoryMsg"), button = document.getElementById("notificationHistoryButton");
+      const memberKey = document.getElementById("historyMemberKey").value.trim();
       try {
         STAFF_HISTORY_IN_FLIGHT = true; if (button) button.disabled = true;
         msg.textContent = "正在讀取圖卡與通知紀錄…";
-        const data = await api("getStaffNotificationHistory", { memberKey: document.getElementById("historyMemberKey").value.trim(), limit: 50 });
+        const data = await api("getStaffNotificationHistory", { memberKey: memberKey, limit: 50 });
+        if (epoch !== STAFF_HISTORY_REQUEST_EPOCH || document.getElementById("historyMemberKey").value.trim() !== memberKey) return;
         renderStaffNotificationHistory(data); msg.textContent = "通知紀錄已更新。";
-      } catch (error) { msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>'; }
+      } catch (error) { if (epoch === STAFF_HISTORY_REQUEST_EPOCH) msg.innerHTML = '<span class="error">' + escapeHtml(error && error.message ? error.message : error) + '</span>'; }
       finally { STAFF_HISTORY_IN_FLIGHT = false; if (button) button.disabled = false; }
     }
 
@@ -2752,6 +2875,7 @@
       const item = STAFF_NOTIFICATION_HISTORY.find(function(record) { return record.recordId === recordId && (!notificationId || record.notificationId === notificationId) && record.notificationStatus === "failed" && (record.type === "cancel" || record.type === "cancellation" || !record.status || String(record.status).toLowerCase() === "active"); });
       const msg = document.getElementById("notificationHistoryMsg");
       if (!item) { msg.innerHTML = '<span class="error">請先更新通知紀錄。</span>'; return; }
+      stopStaffNotificationPolling();
       try {
         STAFF_RESEND_IN_FLIGHT.add(recordId); renderStaffNotificationHistory(STAFF_NOTIFICATION_HISTORY);
         const payload = { recordId: recordId };
