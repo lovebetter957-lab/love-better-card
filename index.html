@@ -429,6 +429,32 @@
       word-break: break-word;
     }
 
+    .staff-history > summary {
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .staff-history-pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      white-space: normal;
+    }
+
+    .staff-history-pagination select {
+      width: auto;
+      max-width: 100%;
+      padding: 10px;
+    }
+
+    .staff-history-record > summary {
+      cursor: pointer;
+      white-space: normal;
+    }
+
     /* =====================================================
        會員集點卡頁
     ===================================================== */
@@ -1457,6 +1483,10 @@
     let STAFF_HISTORY_IN_FLIGHT = false;
     let STAFF_HISTORY_REQUEST_EPOCH = 0;
     let STAFF_NOTIFICATION_HISTORY = [];
+    const STAFF_HISTORY_PAGE_SIZE = 3;
+    let STAFF_HISTORY_PAGE = 1;
+    let STAFF_HISTORY_SECTION_OPEN = false;
+    const STAFF_HISTORY_EXPANDED_IDS = new Set();
     let STAFF_NOTIFICATION_POLL = null;
     let STAFF_BULK_RESULT_EPOCH = 0;
     const STAFF_RESEND_IN_FLIGHT = new Set();
@@ -2400,12 +2430,15 @@
         <div id="bulkMsg" class="small" aria-live="polite"></div>
 
         <div class="divider"></div>
-        <h2 class="section-title">圖卡與通知紀錄</h2>
-        <p class="small">查看會員、任務、此次及累計點數、通知狀態與實際圖卡。</p>
+        <details id="staffNotificationHistory" class="staff-history" ${STAFF_HISTORY_SECTION_OPEN ? "open" : ""} ontoggle="onStaffHistorySectionToggle(this)">
+        <summary>圖卡與通知紀錄</summary>
+        <p class="small">查看已載入的最近紀錄、點數、通知狀態與實際圖卡，每頁顯示 3 筆。</p>
         <div class="field"><div class="field-label">會員本名／編號（留空查看最近紀錄）</div><input id="historyMemberKey" placeholder="會員本名或 LLL-0001" oninput="onStaffHistoryFilterChanged()"></div>
         <button id="notificationHistoryButton" class="btn btn-soft" type="button" onclick="loadStaffNotificationHistory()">更新通知紀錄</button>
         <div id="notificationHistoryMsg" class="small" aria-live="polite"></div>
+        <div id="notificationHistoryPagination" class="staff-history-pagination small"></div>
         <div id="notificationHistoryList" class="small"></div>
+        </details>
       `;
       renderStaffNotificationHistory(STAFF_DATA.notificationHistory || []);
       updateBulkMode();
@@ -2662,6 +2695,8 @@
     function onStaffHistoryFilterChanged() {
       stopStaffNotificationPolling();
       STAFF_HISTORY_REQUEST_EPOCH++;
+      STAFF_HISTORY_PAGE = 1;
+      renderStaffNotificationHistory(STAFF_NOTIFICATION_HISTORY);
     }
 
     function startStaffNotificationPolling(result, bulkEpoch, historyEpoch) {
@@ -2848,19 +2883,54 @@
       if (fallback) fallback.hidden = false;
     }
 
+    function onStaffHistorySectionToggle(section) {
+      if (section && section.isConnected !== false) STAFF_HISTORY_SECTION_OPEN = Boolean(section.open);
+    }
+
+    function getStaffNotificationHistoryKey(item) {
+      return item.notificationId ? "notification:" + item.notificationId : "record:" + JSON.stringify([
+        item.recordId || item.memberId || "", item.type || "", item.createdAt || "", item.taskId || item.taskName || ""
+      ]);
+    }
+
+    function onStaffHistoryRecordToggle(details, key) {
+      if (!details || details.isConnected === false) return;
+      if (details.open) STAFF_HISTORY_EXPANDED_IDS.add(key);
+      else STAFF_HISTORY_EXPANDED_IDS.delete(key);
+    }
+
+    function changeStaffNotificationHistoryPage(value) {
+      const page = Number(value);
+      if (!Number.isInteger(page)) return;
+      STAFF_HISTORY_PAGE = page;
+      renderStaffNotificationHistory(STAFF_NOTIFICATION_HISTORY);
+    }
+
     function renderStaffNotificationHistory(input) {
       const list = document.getElementById("notificationHistoryList");
       if (!list) return;
       const notifications = Array.isArray(input) ? input : input && input.notifications || [];
       STAFF_NOTIFICATION_HISTORY = notifications;
+      const keys = new Set(notifications.map(getStaffNotificationHistoryKey));
+      STAFF_HISTORY_EXPANDED_IDS.forEach(function(key) { if (!keys.has(key)) STAFF_HISTORY_EXPANDED_IDS.delete(key); });
+      const pageCount = Math.max(1, Math.ceil(notifications.length / STAFF_HISTORY_PAGE_SIZE));
+      STAFF_HISTORY_PAGE = Math.max(1, Math.min(STAFF_HISTORY_PAGE, pageCount));
+      const start = (STAFF_HISTORY_PAGE - 1) * STAFF_HISTORY_PAGE_SIZE;
+      const end = Math.min(start + STAFF_HISTORY_PAGE_SIZE, notifications.length);
+      const pagination = document.getElementById("notificationHistoryPagination");
+      if (pagination) pagination.innerHTML = '<label for="notificationHistoryPage">頁次</label><select id="notificationHistoryPage" aria-label="通知紀錄頁次" onchange="changeStaffNotificationHistoryPage(this.value)"' + (notifications.length ? '' : ' disabled') + '>' + Array.from({ length: pageCount }, function(_, index) {
+        const page = index + 1;
+        return '<option value="' + page + '"' + (page === STAFF_HISTORY_PAGE ? ' selected' : '') + '>第 ' + page + '／' + pageCount + ' 頁</option>';
+      }).join("") + '</select><span>已載入 ' + notifications.length + ' 筆' + (notifications.length ? '｜顯示第 ' + (start + 1) + '–' + end + ' 筆' : '') + '</span>';
       const statuses = { sent: "已送出", failed: "發送失敗", pending: "排隊中", sending: "傳送中", legacy: "舊紀錄未保存圖卡" };
-      list.innerHTML = notifications.length ? notifications.map(function(item) {
+      list.innerHTML = notifications.length ? notifications.slice(start, end).map(function(item) {
+        const key = getStaffNotificationHistoryKey(item);
         const imageUrl = safeNotificationImageUrl(item.imageUrl);
         const cancelled = item.type === "cancellation" || item.type === "cancel";
         const canResend = item.notificationStatus === "failed" && item.recordId && (cancelled || !item.status || String(item.status).toLowerCase() === "active");
         const messages = (item.messages || []).filter(function(message) { return message && message.type === "text"; }).map(function(message) { return '<p style="white-space:pre-wrap">' + escapeHtml(message.text) + '</p>'; }).join("");
         const resend = canResend ? '<button class="btn btn-soft" type="button" ' + (STAFF_RESEND_IN_FLIGHT.has(item.recordId) ? 'disabled ' : '') + 'onclick="resendHistoryNotification(\'' + escapeHtml(escapeJsString(item.recordId)) + '\',\'' + escapeHtml(escapeJsString(item.notificationId || "")) + '\')">只補送此通知，不更動點數</button>' : '';
-        return '<details class="field"><summary><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>｜' + escapeHtml(item.taskName || "任務通知") + '｜' + escapeHtml(statuses[item.notificationStatus] || item.notificationStatus || "尚未發送") + '</summary><div>' + escapeHtml(item.memberId) + '｜' + escapeHtml(formatNotificationDate(item.createdAt)) + '<br>' + (cancelled ? '點數調整' : '本次 +' + Number(item.points || 0) + ' 點') + '｜累計 ' + Number(item.completedPoints || 0) + '/' + Number(item.totalPoints || 25) + ' 點' + (imageUrl ? '<p><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(imageUrl) + '" alt="實際發送圖卡" loading="lazy" onerror="showNotificationImageError(this)" style="display:block;width:280px;max-width:100%;height:auto;border-radius:16px"></a><span class="error" hidden>圖卡讀取失敗，請開啟圖卡查看。</span><br><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener">開啟圖卡</a></p>' : '<p>此筆圖卡尚未生成或未保存。</p>') + messages + (item.notificationError ? '<p class="error">' + escapeHtml(item.notificationError) + '</p>' : '') + resend + '</div></details>';
+        return '<details class="field staff-history-record"' + (STAFF_HISTORY_EXPANDED_IDS.has(key) ? ' open' : '') + ' ontoggle="onStaffHistoryRecordToggle(this,\'' + escapeHtml(escapeJsString(key)) + '\')"><summary><strong>' + escapeHtml(item.realName || item.name || item.memberId) + '</strong>｜' + escapeHtml(item.taskName || "任務通知") + '｜' + escapeHtml(statuses[item.notificationStatus] || item.notificationStatus || "尚未發送") + '</summary><div>' + escapeHtml(item.memberId) + '｜' + escapeHtml(formatNotificationDate(item.createdAt)) + '<br>' + (cancelled ? '點數調整' : '本次 +' + Number(item.points || 0) + ' 點') + '｜累計 ' + Number(item.completedPoints || 0) + '/' + Number(item.totalPoints || 25) + ' 點' + (imageUrl ? '<p><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(imageUrl) + '" alt="實際發送圖卡" loading="lazy" onerror="showNotificationImageError(this)" style="display:block;width:280px;max-width:100%;height:auto;border-radius:16px"></a><span class="error" hidden>圖卡讀取失敗，請開啟圖卡查看。</span><br><a href="' + escapeHtml(imageUrl) + '" target="_blank" rel="noopener">開啟圖卡</a></p>' : '<p>此筆圖卡尚未生成或未保存。</p>') + messages + (item.notificationError ? '<p class="error">' + escapeHtml(item.notificationError) + '</p>' : '') + resend + '</div></details>';
       }).join("") : "目前沒有通知紀錄。";
     }
 
