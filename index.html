@@ -77,12 +77,11 @@
        首頁封面：保留原飛機 GIF，疊上新版機票主視覺
     ===================================================== */
     .login-cover {
-      position: fixed;
-      inset: 0;
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
       z-index: 99999;
-      overflow-y: auto;
       background: transparent;
-      -webkit-overflow-scrolling: touch;
     }
 
     .login-cover.is-hidden {
@@ -90,12 +89,7 @@
     }
 
     .login-cover:not(.is-hidden) + .app-shell {
-      visibility: hidden;
-      position: fixed;
-      inset: 0;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
+      display: none;
     }
 
     .login-cover-frame {
@@ -865,7 +859,7 @@
       border: 1px solid #f3c2d6;
       border-radius: 20px;
       background: #fffafd;
-      touch-action: none;
+      touch-action: pan-y;
       overscroll-behavior: contain;
     }
 
@@ -1774,6 +1768,10 @@
       });
     }
 
+    function preventSignatureScroll(event) {
+      if (event.cancelable) event.preventDefault();
+    }
+
     function setSignatureScrollLock(locked) {
       const body = document.body, root = document.documentElement;
       if (!body) return;
@@ -1793,11 +1791,13 @@
         body.style.width = "100%";
         body.style.overflow = "hidden";
         if (root) root.style.overflow = "hidden";
+        document.addEventListener("touchmove", preventSignatureScroll, { passive: false, capture: true });
       }
       body.classList.toggle("is-signing", shouldLock);
       if (!shouldLock && SIGNATURE_SCROLL_SNAPSHOT) {
         const saved = SIGNATURE_SCROLL_SNAPSHOT;
         SIGNATURE_SCROLL_SNAPSHOT = null;
+        document.removeEventListener("touchmove", preventSignatureScroll, true);
         Object.keys(saved.body).forEach(function(key) { body.style[key] = saved.body[key]; });
         if (root) { root.style.overflow = saved.rootOverflow; root.style.scrollBehavior = "auto"; }
         window.scrollTo({ left: saved.x, top: saved.y, behavior: "auto" });
@@ -1843,10 +1843,6 @@
       if (SIGNATURE_EDITOR_FOCUS && typeof SIGNATURE_EDITOR_FOCUS.focus === "function") SIGNATURE_EDITOR_FOCUS.focus({ preventScroll: true });
       SIGNATURE_EDITOR_FOCUS = null;
     }
-
-    document.addEventListener("touchmove", function(event) {
-      if ((SIGNATURE_EDITOR_OPEN || (SIGNATURE_PAD_STATE && SIGNATURE_PAD_STATE.drawing)) && event.cancelable) event.preventDefault();
-    }, { passive: false, capture: true });
 
     document.addEventListener("keydown", function(event) {
       if (!SIGNATURE_EDITOR_OPEN) return;
@@ -2979,6 +2975,9 @@
 
       if (cover) {
         cover.classList.add("is-hidden");
+      }
+      if (SIGNATURE_PAD_STATE) {
+        requestAnimationFrame(function() { SIGNATURE_PAD_STATE.resize(); });
       }
     }
 
